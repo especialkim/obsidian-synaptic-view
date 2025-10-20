@@ -13,6 +13,22 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	/**
+	 * Journal Granularity에 맞는 Lucide 아이콘 이름 반환
+	 */
+	private getJournalIcon(granularity?: JournalGranularity): string {
+		const iconMap: Record<JournalGranularity, string> = {
+			'all': 'calendar-fold',
+			'day': 'calendar-day',
+			'week': 'calendar-week',
+			'month': 'calendar-month',
+			'quarter': 'calendar-quarter',
+			'year': 'calendar-year'
+		};
+		
+		return iconMap[granularity || 'day'];
+	}
+
 	display(): void {
 		const { containerEl } = this;
 
@@ -137,12 +153,15 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 				
 				file.type = value as 'file' | 'web' | 'calendar' | 'journal';
 				
-				// Journal 타입으로 변경 시 기본값 설정
-				if (value === 'journal') {
-					const availableGranularities = getAvailableGranularities();
-					file.granularity = availableGranularities.length > 0 ? availableGranularities[0] : 'day';
-					file.filePath = ''; // Journal은 filePath 사용 안 함
-				}
+			// Journal 타입으로 변경 시 기본값 설정
+			if (value === 'journal') {
+				const availableGranularities = getAvailableGranularities();
+				// Granularity는 초기화 (사용자가 직접 선택하도록)
+				file.granularity = undefined;
+				file.filePath = ''; // Journal은 filePath 사용 안 함
+				// 아이콘은 비워둠 (Granularity 선택 시 자동 설정)
+				file.icon = '';
+			}
 				
 				await this.plugin.saveSettings();
 				// 타입 변경시 화면 다시 그리기
@@ -198,10 +217,18 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 			}
 		});
 
-		// 아이콘 버튼
+	// 아이콘 버튼 (Journal 타입이고 아이콘이 없으면 버튼 자체를 숨김)
+	const shouldShowIconButton = !(file.type === 'journal' && !file.icon);
+	
+	if (shouldShowIconButton) {
 		setting.addButton(button => {
 			button.buttonEl.addClass('synaptic-icon-button');
-			setIcon(button.buttonEl, file.icon);
+			
+			// 아이콘이 있으면 표시
+			if (file.icon) {
+				setIcon(button.buttonEl, file.icon);
+			}
+			
 			button.onClick(() => {
 				new IconPickerModal(
 					this.app,
@@ -216,6 +243,12 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 				).open();
 			});
 		});
+	} else {
+		// Journal 타입이고 아이콘 없을 때: 빈 공간 유지 (레이아웃 정렬용)
+		setting.addButton(button => {
+			button.buttonEl.style.visibility = 'hidden';
+		});
+	}
 
 	// 파일 경로/URL 입력 또는 Granularity 선택 (wrapper로 감싸서 position relative 적용)
 	const pathWrapper = createDiv({ cls: 'synaptic-file-path-wrapper' });
@@ -225,18 +258,26 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 	if (file.type === 'journal') {
 		const availableGranularities = getAvailableGranularities();
 		
-		// Granularity 드롭다운을 select 요소로 추가
-		const granularitySelect = pathWrapper.createEl('select', {
-			cls: 'dropdown synaptic-granularity-dropdown'
+	// Granularity 드롭다운을 select 요소로 추가
+	const granularitySelect = pathWrapper.createEl('select', {
+		cls: 'dropdown synaptic-granularity-dropdown'
+	});
+	
+	// 기본 placeholder 옵션 추가
+	const placeholderOption = granularitySelect.createEl('option', {
+		value: '',
+		text: '선택하세요...'
+	});
+	placeholderOption.disabled = true;
+	placeholderOption.selected = true;
+	
+	// "All" 옵션 추가 (모든 granularity 사용 가능할 때만)
+	if (availableGranularities.length > 1) {
+		const allOption = granularitySelect.createEl('option', {
+			value: 'all',
+			text: 'All'
 		});
-		
-		// "All" 옵션 추가 (모든 granularity 사용 가능할 때만)
-		if (availableGranularities.length > 1) {
-			const allOption = granularitySelect.createEl('option', {
-				value: 'all',
-				text: 'All'
-			});
-		}
+	}
 		
 	// Granularity 옵션들 추가
 	const granularityLabels: Record<JournalGranularity, string> = {
@@ -255,18 +296,23 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		});
 	});
 	
-	// 현재 값 설정 (없으면 첫 번째 값)
-	// 'all'은 항상 유효한 값으로 허용
-	if (!file.granularity || (file.granularity !== 'all' && !availableGranularities.includes(file.granularity))) {
-		file.granularity = availableGranularities[0] || 'day';
+	// 현재 값 설정 (기존에 저장된 값이 있으면 설정, 없으면 placeholder 유지)
+	if (file.granularity && (file.granularity === 'all' || availableGranularities.includes(file.granularity))) {
+		granularitySelect.value = file.granularity;
+	} else {
+		// 새로운 항목이거나 유효하지 않은 값이면 placeholder 유지
+		granularitySelect.value = '';
+		file.granularity = undefined; // 초기화
 	}
-	granularitySelect.value = file.granularity;
 		
-		// 변경 이벤트
-		granularitySelect.addEventListener('change', async () => {
-			file.granularity = granularitySelect.value as JournalGranularity;
-			await this.plugin.saveSettings();
-		});
+	// 변경 이벤트 - Granularity 선택 시 디폴트 아이콘 자동 설정
+	granularitySelect.addEventListener('change', async () => {
+		file.granularity = granularitySelect.value as JournalGranularity;
+		file.icon = this.getJournalIcon(file.granularity); // Granularity에 맞는 아이콘 설정
+		await this.plugin.saveSettings();
+		this.display(); // 아이콘 업데이트를 위해 화면 다시 그리기
+		this.plugin.customizeEmptyState();
+	});
 		
 		// filePath는 비워둠 (런타임에 계산됨)
 		file.filePath = '';
