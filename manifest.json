@@ -1,0 +1,10 @@
+{
+	"id": "obsidian-synaptic-view",
+	"name": "Synaptic View",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "A plugin for visualizing connections between notes in Obsidian.",
+	"author": "Yongmini",
+	"authorUrl": "https://x.com/Facilitate4U",
+	"isDesktopOnly": true
+}

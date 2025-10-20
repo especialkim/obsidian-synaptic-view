@@ -1,0 +1,362 @@
+/* Synaptic View 탭에만 아이콘 표시 */
+.workspace-tab-header.synaptic-view-tab .workspace-tab-header-inner-icon {
+	display: flex !important;
+	align-items: center;
+	justify-content: center;
+	margin-right: 4px;
+}
+
+.workspace-tab-header.synaptic-view-tab .workspace-tab-header-inner-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* Quick Access 설정 안내 메시지 스타일 */
+.synaptic-empty-state {
+	position: relative;
+	display: flex !important;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	width: 100%;
+	overflow: auto;
+}
+
+.synaptic-setup-message {
+	text-align: center;
+	max-width: 500px;
+	padding: 2rem;
+}
+
+.synaptic-setup-message h2 {
+	font-size: 2em;
+	margin-bottom: 1.5rem;
+	color: var(--text-normal);
+}
+
+.synaptic-setup-text {
+	font-size: 1.1em;
+	color: var(--text-muted);
+	margin-bottom: 1rem;
+	line-height: 1.6;
+}
+
+.synaptic-setup-button-container {
+	margin-top: 2rem;
+}
+
+.synaptic-setup-button {
+	font-size: 1em;
+	padding: 0.75rem 2rem;
+	cursor: pointer;
+}
+
+/* 파일 선택 자동완성 스타일 */
+.synaptic-file-path-wrapper {
+	position: relative;
+	flex: 1;
+	min-width: 200px;
+}
+
+.synaptic-file-path-input {
+	width: 100%;
+	padding: 6px 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+	box-sizing: border-box;
+	font-size: var(--font-ui-small);
+}
+
+.synaptic-file-suggestions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	margin-top: 4px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background-color: var(--background-primary);
+	max-height: 300px;
+	overflow-y: auto;
+	z-index: 1000;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.synaptic-file-suggestions .suggestion-item {
+	padding: 8px 12px;
+	cursor: pointer;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.synaptic-file-suggestions .suggestion-item:last-child {
+	border-bottom: none;
+}
+
+.synaptic-file-suggestions .suggestion-item:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.synaptic-file-suggestions .suggestion-item.is-selected {
+	background-color: var(--background-modifier-hover);
+	color: var(--text-accent);
+	font-weight: 500;
+}
+
+/* 액션 버튼 스타일 - 상단 오른쪽 */
+/* .view-content 내부에 배치되는 플로팅 버튼 */
+.view-content {
+	position: relative; /* 버튼의 absolute 위치 기준점 */
+}
+
+.synaptic-action-buttons {
+	position: absolute;
+	top: 1rem;
+	right: 1.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	z-index: 100;
+}
+
+.synaptic-action-button {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	color: var(--text-muted);
+}
+
+.synaptic-action-button:hover {
+	background-color: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
+	color: var(--interactive-accent);
+	transform: scale(1.1);
+}
+
+.synaptic-action-button-active {
+	background-color: var(--interactive-accent) !important;
+	color: var(--text-on-accent) !important;
+	border-color: var(--interactive-accent) !important;
+}
+
+.synaptic-action-button.edit-mode {
+	background-color: var(--interactive-accent) !important;
+	color: var(--text-on-accent) !important;
+	border-color: var(--interactive-accent) !important;
+	transform: scale(1.1);
+}
+
+.synaptic-action-button svg {
+	width: 20px;
+	height: 20px;
+}
+
+/* Quick Access Files 설정 스타일 - 한 줄 레이아웃 */
+.synaptic-quick-access-files {
+	margin-top: 0.5rem;
+}
+
+.synaptic-file-item-inline {
+	margin: 0 !important;
+	padding: 0.5rem 0 !important;
+	border-bottom: none !important;
+	background-color: transparent !important;
+}
+
+.synaptic-file-item-inline .setting-item-info {
+	min-width: 30px;
+	max-width: 30px;
+	flex-shrink: 0;
+}
+
+.synaptic-file-item-inline .setting-item-control {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	flex-wrap: nowrap;
+	flex: 1;
+}
+
+.synaptic-type-dropdown {
+	width: 100px !important;
+	flex-shrink: 0;
+}
+
+.synaptic-icon-button {
+	width: 32px !important;
+	height: 32px !important;
+	padding: 0 !important;
+	flex-shrink: 0;
+}
+
+/* 위/아래 버튼도 고정 너비 */
+.synaptic-file-item-inline .setting-item-control button:not(.synaptic-icon-button) {
+	width: 32px !important;
+	height: 32px !important;
+	flex-shrink: 0;
+}
+
+/* 아이콘 선택 모달 */
+.synaptic-icon-picker-modal {
+	padding: 1rem;
+	max-width: 640px; /* 8개 아이콘 + gap을 고려한 너비 */
+	height: 600px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.synaptic-icon-picker-modal h2 {
+	margin: 0 0 1rem 0;
+	flex-shrink: 0;
+}
+
+.synaptic-icon-search {
+	margin-bottom: 1rem;
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.synaptic-icon-search-input {
+	flex: 1;
+	padding: 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+}
+
+.synaptic-use-custom-icon-btn {
+	padding: 8px 16px;
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	white-space: nowrap;
+	font-weight: 500;
+}
+
+.synaptic-use-custom-icon-btn:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.synaptic-icon-section-title {
+	font-size: 0.9em;
+	font-weight: 600;
+	color: var(--text-muted);
+	margin-top: 1rem;
+	margin-bottom: 0.5rem;
+	flex-shrink: 0;
+}
+
+.synaptic-icon-section-title:first-of-type {
+	margin-top: 0;
+}
+
+.synaptic-icon-picker-modal > div {
+	flex-shrink: 0;
+}
+
+.synaptic-icons-grid {
+	display: grid;
+	grid-template-columns: repeat(8, 50px); /* 한 줄에 정확히 8개 */
+	column-gap: 8px; /* 가로 간격 (최소 간격) */
+	row-gap: 8px; /* 세로 간격 */
+	margin-bottom: 1rem;
+	padding: 4px; /* hover 시 잘리지 않도록 여백 추가 */
+	justify-content: center; /* 중앙 정렬 */
+	align-content: start; /* 수직 정렬 일관성 */
+}
+
+.synaptic-recent-icons {
+	max-height: 150px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	flex-shrink: 0;
+	/* 스크롤바가 생겨도 레이아웃 유지 */
+	scrollbar-gutter: stable;
+}
+
+.synaptic-all-icons {
+	flex: 1;
+	overflow-y: auto;
+	overflow-x: hidden;
+	min-height: 0;
+	/* 스크롤바가 생겨도 레이아웃 유지 */
+	scrollbar-gutter: stable;
+}
+
+.synaptic-hidden {
+	display: none !important;
+}
+
+.synaptic-icon-item {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 50px;
+	height: 50px;
+	border: 2px solid var(--background-modifier-border);
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	background-color: var(--background-primary);
+	position: relative; /* z-index 적용을 위해 */
+	box-sizing: border-box; /* border 포함하여 크기 계산 */
+}
+
+.synaptic-icon-item:hover {
+	background-color: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
+	z-index: 10; /* hover 시 위로 올림 */
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* 그림자 효과 추가 */
+}
+
+.synaptic-icon-preview svg {
+	width: 24px;
+	height: 24px;
+	color: var(--text-normal);
+}
+
+.synaptic-no-results {
+	text-align: center;
+	color: var(--text-muted);
+	padding: 2rem;
+	min-height: 150px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.synaptic-no-results-query {
+	font-size: 0.9em;
+	color: var(--text-faint);
+	margin-top: 0.5rem;
+}
+
+/* Synaptic View 컨테이너 스타일 - 옵션별 요소 숨김 */
+/* 인라인 타이틀 숨김 (Preview 모드만) */
+.synaptic-viewer-container.hide-inline-title .inline-title {
+	display: none;
+}
+
+/* Embedded Mentions 숨김 (하단 백링크, 임베디드 멘션) */
+.synaptic-viewer-container.hide-embedded-mentions .mod-footer,
+.synaptic-viewer-container.hide-embedded-mentions .embedded-backlinks,
+.synaptic-viewer-container.hide-embedded-mentions .backlink,
+.synaptic-viewer-container.hide-embedded-mentions .metadata-container {
+	display: none;
+}
