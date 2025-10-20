@@ -4,6 +4,7 @@ import { navigateToFile } from '../actions/navigateFileAction';
 import { SynapticViewSettings, QuickAccessFile, JournalGranularity } from '../settings';
 import { openPluginSettings } from '../utils/openSettings';
 import { getJournalNotePath, getAvailableGranularities } from '../utils/pluginChecker';
+import { CalendarSubmenu } from './calendarSubmenu';
 
 export interface ActionButton {
 	id: string;
@@ -21,6 +22,7 @@ export class FloatingButtonManager {
 	private buttonContainer: HTMLElement | null = null;
 	private isModifierKeyPressed: boolean = false;
 	private openedSubmenu: HTMLElement | null = null;
+	private calendarSubmenu: CalendarSubmenu;
 
 	constructor(app: App, settings: SynapticViewSettings, onFileSelect: (quickAccessFile: QuickAccessFile) => void, currentFilePath: string | null = null, currentActiveButtonId: string | null = null) {
 		this.app = app;
@@ -28,6 +30,7 @@ export class FloatingButtonManager {
 		this.onFileSelect = onFileSelect;
 		this.currentFilePath = currentFilePath;
 		this.currentActiveButtonId = currentActiveButtonId;
+		this.calendarSubmenu = new CalendarSubmenu(app, settings, onFileSelect);
 	}
 
 	addFloatingButton(container: HTMLElement) {
@@ -101,6 +104,10 @@ export class FloatingButtonManager {
 			// 런타임에 실제 파일 경로 계산
 			// 'all'은 아직 구현 안 됨 - 임시로 day 사용
 			actualFilePath = granularity === 'all' ? '' : getJournalNotePath(granularity);
+		} else if (file.type === 'calendar') {
+			// Calendar 타입
+			fileName = 'Calendar';
+			actualFilePath = ''; // Calendar는 아직 기능 없음
 		} else {
 				// File/Web 타입
 				fileName = file.filePath 
@@ -171,8 +178,20 @@ export class FloatingButtonManager {
 		badge.textContent = badgeText;
 	}
 	
-	// 마우스 호버 이벤트 (모든 버튼 포함, All 버튼도 편집 가능)
-	button.addEventListener('mouseenter', () => {
+	// Calendar 타입이면 배지 추가 및 서브메뉴 생성
+	if (file.type === 'calendar') {
+		const badgeText = 'Cal';
+		button.setAttribute('data-badge-text', badgeText); // 배지 텍스트 저장
+		
+		const badge = button.createDiv({ cls: 'synaptic-journal-badge' });
+		badge.textContent = badgeText;
+		
+		// Calendar 서브메뉴 추가
+		this.calendarSubmenu.addCalendarSubmenu(button, file);
+	}
+	
+    // 마우스 호버 이벤트 (편집 모드용)
+    button.addEventListener('mouseenter', () => {
 		// currentFilePath가 있고, file 또는 journal 타입만 편집 가능
 		if (this.isModifierKeyPressed && 
 		    this.currentFilePath && 
@@ -183,22 +202,26 @@ export class FloatingButtonManager {
 			if (isAllButton) {
 				// ALL 버튼이 활성화되어 있으면 편집 아이콘 표시
 				if (isActive) {
-					console.log('[마우스 호버] ALL 버튼 - 편집 아이콘 표시');
 					this.showEditIcon(button);
 				}
 			} else if (actualFilePath === this.currentFilePath) {
-				console.log('[마우스 호버] 일반 버튼 - 편집 아이콘 표시:', actualFilePath);
 				this.showEditIcon(button);
 			}
 		}
 	});
 
-	button.addEventListener('mouseleave', () => {
-		this.restoreOriginalIcon(button);
-	});
+    button.addEventListener('mouseleave', () => {
+        this.restoreOriginalIcon(button);
+    });
 	
 	button.addEventListener('click', (e) => {
 		e.stopPropagation();
+		
+		// Calendar 타입은 아직 기능 없음
+		if (file.type === 'calendar') {
+			console.log('[Calendar] 기능 구현 예정');
+			return;
+		}
 		
 		// // All 버튼 클릭 시 서브메뉴 토글 (주석 처리 - hover로만 작동)
 		// const buttonGranularity = button.getAttribute('data-granularity');
@@ -276,12 +299,15 @@ export class FloatingButtonManager {
 
 	private setupOutsideClickListener() {
 		document.addEventListener('click', (e) => {
-			// 서브메뉴나 All 버튼 클릭이 아니면 서브메뉴 닫기
+			// 서브메뉴나 All 버튼, Calendar 버튼 클릭이 아니면 서브메뉴 닫기
 			const target = e.target as HTMLElement;
-			if (!target.closest('.synaptic-journal-submenu') && 
-			    !target.closest('.synaptic-action-button[data-granularity="all"]')) {
-				this.closeSubmenu();
-			}
+            if (!target.closest('.synaptic-journal-submenu') && 
+                !target.closest('.synaptic-calendar-submenu') &&
+                !target.closest('.synaptic-action-button[data-granularity="all"]') &&
+                !target.closest('.synaptic-action-button[data-file-type="calendar"]')) {
+                this.closeSubmenu();
+                this.calendarSubmenu.closeSubmenu();
+            }
 		});
 	}
 
@@ -325,11 +351,10 @@ export class FloatingButtonManager {
 		button.addClass('edit-mode');
 		
 		// 서브메뉴 임시 저장 (삭제 방지)
-		const submenu = button.querySelector('.synaptic-journal-submenu');
-		const submenuParent = submenu?.parentElement;
-		if (submenu && submenuParent) {
-			submenu.detach();
-		}
+		const submenus = Array.from(
+			button.querySelectorAll('.synaptic-journal-submenu, .synaptic-calendar-submenu')
+		) as HTMLElement[];
+		submenus.forEach(submenu => submenu.detach());
 		
 		button.empty();
 		setIcon(button, 'pencil');
@@ -344,9 +369,7 @@ export class FloatingButtonManager {
 		}
 		
 		// 서브메뉴 복원
-		if (submenu) {
-			button.appendChild(submenu);
-		}
+		submenus.forEach(submenu => button.appendChild(submenu));
 	}
 
 	private restoreOriginalIcon(button: HTMLElement) {
@@ -355,11 +378,10 @@ export class FloatingButtonManager {
 		const originalTooltip = button.getAttribute('data-original-tooltip') || '';
 		
 		// 서브메뉴 임시 저장 (삭제 방지)
-		const submenu = button.querySelector('.synaptic-journal-submenu');
-		const submenuParent = submenu?.parentElement;
-		if (submenu && submenuParent) {
-			submenu.detach();
-		}
+		const submenus = Array.from(
+			button.querySelectorAll('.synaptic-journal-submenu, .synaptic-calendar-submenu')
+		) as HTMLElement[];
+		submenus.forEach(submenu => submenu.detach());
 		
 		button.empty();
 		setIcon(button, originalIcon);
@@ -373,9 +395,7 @@ export class FloatingButtonManager {
 		}
 		
 		// 서브메뉴 복원
-		if (submenu) {
-			button.appendChild(submenu);
-		}
+		submenus.forEach(submenu => button.appendChild(submenu));
 	}
 
 	private addJournalSubmenu(button: HTMLElement, file: QuickAccessFile) {

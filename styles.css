@@ -186,6 +186,247 @@
 	display: none !important;
 }
 
+/* Calendar Submenu - Calendar 버튼 hover 시 왼쪽에 표시되는 서브메뉴 */
+.synaptic-calendar-submenu {
+	position: absolute;
+	right: calc(100% + 4px);
+	top: 0;
+	display: none;
+	flex-direction: column;
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 10px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	z-index: 1000;
+	min-width: 260px;
+	max-width: 260px;
+	/* Base font-size for all inner elements. Tweak this variable to scale the whole calendar. */
+	--syn-cal-font-size: 13px;
+	font-size: var(--syn-cal-font-size);
+}
+
+/* 서브메뉴와 버튼 사이 hover 영역 연결 (보이지 않는 다리) */
+.synaptic-calendar-submenu::after {
+	content: '';
+	position: absolute;
+	left: 100%;
+	top: 0;
+	width: 15px;
+	height: 100%;
+	background: transparent;
+	pointer-events: auto;
+}
+
+/* Calendar 버튼에 왼쪽 확장 영역 추가 (서브메뉴와의 간격을 hover 가능하게) */
+.synaptic-action-button[data-file-type="calendar"]::before {
+	content: '';
+	position: absolute;
+	right: 100%;
+	top: 0;
+	width: 15px;
+	height: 100%;
+	background: transparent;
+	pointer-events: auto;
+}
+
+/* Calendar 버튼에 hover 시 또는 opened 클래스 있을 때 서브메뉴 표시 (순수 CSS) */
+.synaptic-action-button[data-file-type="calendar"]:hover .synaptic-calendar-submenu,
+.synaptic-calendar-submenu:hover,
+.synaptic-calendar-submenu.synaptic-submenu-opened {
+	display: flex !important;
+}
+
+/* Calendar 헤더 */
+.synaptic-calendar-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 10px;
+	gap: 6px;
+}
+
+.synaptic-calendar-nav-btn {
+	cursor: pointer;
+	padding: 0.25em;
+	border-radius: 4px;
+	color: var(--text-muted);
+	transition: all 0.15s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2em;
+	height: 2em;
+	flex-shrink: 0;
+}
+
+.synaptic-calendar-nav-btn svg {
+	width: 1em;
+	height: 1em;
+}
+
+.synaptic-calendar-nav-btn:hover {
+	background-color: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.synaptic-calendar-year {
+	font-weight: 600;
+	color: var(--text-normal);
+	font-size: 1em;
+	cursor: pointer;
+	padding: 0.35em 0.6em;
+	border-radius: 4px;
+	transition: all 0.15s ease;
+	flex-shrink: 0;
+}
+
+.synaptic-calendar-year:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.synaptic-calendar-month {
+	font-weight: 600;
+	color: var(--text-normal);
+	font-size: 1em;
+	cursor: pointer;
+	padding: 0.35em 0.6em;
+	border-radius: 4px;
+	transition: all 0.15s ease;
+	flex-shrink: 0;
+}
+
+.synaptic-calendar-month:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+/* Calendar 분기 버튼 */
+.synaptic-calendar-quarters {
+	display: flex;
+	gap: 0.3em;
+	margin-bottom: 0.7em;
+}
+
+.synaptic-calendar-quarter-btn {
+	flex: 1;
+	padding: 0.5em 0.3em;
+	background-color: var(--background-secondary);
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 0.85em;
+	font-weight: 600;
+	text-align: center;
+	color: var(--text-muted);
+	transition: all 0.15s ease;
+}
+
+.synaptic-calendar-quarter-btn:hover {
+	background-color: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+/* Calendar 요일 헤더 */
+.synaptic-calendar-weekdays {
+	display: grid;
+	grid-template-columns: 2em repeat(7, 1fr);
+	gap: 0.25em;
+	margin-bottom: 0.5em;
+}
+
+.synaptic-calendar-weekday {
+	text-align: center;
+	font-size: 0.85em;
+	font-weight: 700;
+	color: var(--text-muted);
+	padding: 0.35em 0.2em;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.synaptic-calendar-weekday-week {
+	font-size: 0.75em;
+	color: var(--text-faint);
+}
+
+/* Calendar 그리드 */
+.synaptic-calendar-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25em;
+}
+
+.synaptic-calendar-week {
+	display: grid;
+	grid-template-columns: 2em repeat(7, 1fr);
+	gap: 0.25em;
+	border-radius: 4px;
+	padding: 0;
+	transition: all 0.15s ease;
+}
+
+.synaptic-calendar-week:hover .synaptic-calendar-week-number {
+	background-color: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+/* 주차 번호 */
+.synaptic-calendar-week-number {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.85em;
+	font-weight: 600;
+	color: var(--text-faint);
+	cursor: pointer;
+	border-radius: 4px;
+	transition: all 0.15s ease;
+}
+
+.synaptic-calendar-week-number:hover {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: 700;
+}
+
+.synaptic-calendar-day {
+	aspect-ratio: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	border-radius: 4px;
+	font-size: 0.9em;
+	font-weight: 500;
+	color: var(--text-normal);
+	transition: all 0.15s ease;
+	min-width: 2.1em;
+	min-height: 2.1em;
+}
+
+.synaptic-calendar-day:hover {
+	background-color: var(--background-modifier-hover) !important;
+	color: var(--text-normal);
+	font-weight: 600;
+	transform: scale(1.05);
+}
+
+.synaptic-calendar-day-today {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	font-weight: 700;
+}
+
+.synaptic-calendar-day-today:hover {
+	background-color: var(--interactive-accent-hover) !important;
+	transform: scale(1.1);
+}
+
+.synaptic-calendar-day-other-month {
+	color: var(--text-faint);
+	opacity: 0.4;
+}
+
+
 /* Journal Submenu - All 버튼 hover 시 왼쪽에 표시되는 서브메뉴 */
 .synaptic-journal-submenu {
 	position: absolute;

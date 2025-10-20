@@ -79,6 +79,12 @@ export class EmptyStateViewManager {
 		console.log('[customizeEmptyState] 로드할 항목:', quickAccessFileToLoad);
 		
 		// Type에 따라 다르게 처리
+		if (quickAccessFileToLoad.type === 'calendar') {
+			// Calendar 타입은 아직 기능 없음
+			console.log('[customizeEmptyState] Calendar 타입은 아직 구현되지 않았습니다');
+			continue;
+		}
+		
 		if (quickAccessFileToLoad.type === 'file' || quickAccessFileToLoad.type === 'journal') {
 		// Journal Note 타입이면 granularity에 따라 경로를 동적으로 계산
 		let filePathToLoad = quickAccessFileToLoad.filePath;
@@ -434,6 +440,12 @@ export class EmptyStateViewManager {
 	const iconName = quickAccessFile.icon || defaultIcon;
 	
 	// Type에 따라 다르게 처리
+	if (quickAccessFile.type === 'calendar') {
+		// Calendar 타입은 아직 기능 없음
+		console.log('[loadFile] Calendar 타입은 아직 구현되지 않았습니다');
+		return;
+	}
+	
 	if (quickAccessFile.type === 'file' || quickAccessFile.type === 'journal') {
 		// File/Journal Note 타입: Obsidian 파일 열기
 		let file = this.app.vault.getAbstractFileByPath(filePath);

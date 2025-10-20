@@ -133,17 +133,12 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 			dropdown.addOption('journal', 'Journal');
 		}
 		
-		// Calendar는 TBD
-		dropdown.addOption('calendar', 'Calendar (TBD)');
+		// Calendar 옵션 추가
+		dropdown.addOption('calendar', 'Calendar');
 		
 		dropdown
 			.setValue(file.type)
 			.onChange(async (value) => {
-				if (value === 'calendar') {
-					// 아직 구현되지 않은 기능
-					dropdown.setValue(file.type);
-					return;
-				}
 				
 				if (value === 'journal' && !isJournalActive) {
 					// Journal 기능이 비활성화되어 있으면 경고
@@ -161,6 +156,12 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 				file.filePath = ''; // Journal은 filePath 사용 안 함
 				// 아이콘은 비워둠 (Granularity 선택 시 자동 설정)
 				file.icon = '';
+			}
+			
+			// Calendar 타입으로 변경 시 기본값 설정
+			if (value === 'calendar') {
+				file.filePath = ''; // Calendar는 filePath 사용 안 함
+				file.icon = 'calendar-days'; // Calendar 기본 아이콘 설정
 			}
 				
 				await this.plugin.saveSettings();
@@ -315,6 +316,20 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 	});
 		
 		// filePath는 비워둠 (런타임에 계산됨)
+		file.filePath = '';
+	} else if (file.type === 'calendar') {
+		// Calendar 타입일 때는 비활성화된 입력창 표시
+		const textInput = pathWrapper.createEl('input', {
+			type: 'text',
+			placeholder: 'Calendar 기능 (구현 예정)',
+			value: '',
+			cls: 'synaptic-file-path-input'
+		});
+		textInput.disabled = true;
+		textInput.style.opacity = '0.5';
+		textInput.style.cursor = 'not-allowed';
+		
+		// filePath는 비워둠 (Calendar는 filePath 사용 안 함)
 		file.filePath = '';
 	} else {
 		// File/Web 타입일 때는 기존 로직
