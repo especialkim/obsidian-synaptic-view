@@ -3,8 +3,9 @@ import { createNewFile } from '../actions/createFileAction';
 import { navigateToFile } from '../actions/navigateFileAction';
 import { SynapticViewSettings, QuickAccessFile, JournalGranularity } from '../settings';
 import { openPluginSettings } from '../utils/openSettings';
-import { getJournalNotePath, getAvailableGranularities } from '../utils/pluginChecker';
+import { getJournalNotePath } from '../utils/pluginChecker';
 import { CalendarSubmenu } from './calendarSubmenu';
+import { JournalSubmenu } from './journalSubmenu';
 
 export interface ActionButton {
 	id: string;
@@ -21,8 +22,8 @@ export class FloatingButtonManager {
 	public currentActiveButtonId: string | null = null; // 현재 활성화된 버튼 ID 저장 (외부 접근 가능)
 	private buttonContainer: HTMLElement | null = null;
 	private isModifierKeyPressed: boolean = false;
-	private openedSubmenu: HTMLElement | null = null;
 	private calendarSubmenu: CalendarSubmenu;
+    private journalSubmenu: JournalSubmenu;
 
 	constructor(app: App, settings: SynapticViewSettings, onFileSelect: (quickAccessFile: QuickAccessFile) => void, currentFilePath: string | null = null, currentActiveButtonId: string | null = null) {
 		this.app = app;
@@ -30,7 +31,8 @@ export class FloatingButtonManager {
 		this.onFileSelect = onFileSelect;
 		this.currentFilePath = currentFilePath;
 		this.currentActiveButtonId = currentActiveButtonId;
-		this.calendarSubmenu = new CalendarSubmenu(app, settings, onFileSelect);
+        this.calendarSubmenu = new CalendarSubmenu(app, settings, onFileSelect);
+        this.journalSubmenu = new JournalSubmenu(app, settings, onFileSelect, (filePath: string, activeButtonId?: string) => this.updateActiveButton(filePath, activeButtonId));
 	}
 
 	addFloatingButton(container: HTMLElement) {
@@ -164,9 +166,9 @@ export class FloatingButtonManager {
 		badge.textContent = badgeText;
 		
 		// 'all' granularity이면 서브메뉴 추가
-		if (granularity === 'all') {
-			this.addJournalSubmenu(button, file);
-		}
+        if (granularity === 'all') {
+            this.journalSubmenu.addJournalSubmenu(button, file);
+        }
 	}
 	
 	// Web 타입이면 배지 추가
@@ -305,7 +307,7 @@ export class FloatingButtonManager {
                 !target.closest('.synaptic-calendar-submenu') &&
                 !target.closest('.synaptic-action-button[data-granularity="all"]') &&
                 !target.closest('.synaptic-action-button[data-file-type="calendar"]')) {
-                this.closeSubmenu();
+				this.journalSubmenu.closeSubmenu();
                 this.calendarSubmenu.closeSubmenu();
             }
 		});
@@ -398,91 +400,7 @@ export class FloatingButtonManager {
 		submenus.forEach(submenu => button.appendChild(submenu));
 	}
 
-	private addJournalSubmenu(button: HTMLElement, file: QuickAccessFile) {
-		// 서브메뉴 컨테이너 생성
-		const submenu = button.createDiv({ cls: 'synaptic-journal-submenu' });
-		
-		// 사용 가능한 granularity 가져오기
-		const availableGranularities = getAvailableGranularities();
-		
-		const granularityLabels: Record<JournalGranularity, string> = {
-			'all': 'All',
-			'day': 'Daily',
-			'week': 'Weekly',
-			'month': 'Monthly',
-			'quarter': 'Quarterly',
-			'year': 'Yearly'
-		};
-		
-	const badgeLabels: Record<JournalGranularity, string> = {
-		'all': 'J',  // Journal
-		'day': 'D',
-		'week': 'W',
-		'month': 'M',
-		'quarter': 'Q',
-		'year': 'Y'
-	};
-		
-		// 각 granularity에 대한 메뉴 아이템 생성
-		availableGranularities.forEach(granularity => {
-			const item = submenu.createDiv({ cls: 'synaptic-journal-submenu-item' });
-			
-			// 아이콘 (file과 동일한 아이콘 사용)
-			// const iconEl = item.createDiv({ cls: 'synaptic-journal-submenu-icon' });
-			// setIcon(iconEl, file.icon);
-			
-			// 배지
-			const badgeEl = item.createDiv({ cls: 'synaptic-journal-submenu-badge' });
-			badgeEl.textContent = badgeLabels[granularity];
-			
-			// 라벨
-			const labelEl = item.createDiv({ cls: 'synaptic-journal-submenu-label' });
-			labelEl.textContent = granularityLabels[granularity];
-			
-		// 클릭 이벤트
-		item.addEventListener('click', (e) => {
-			e.stopPropagation();
-			// 해당 granularity의 journal 열기
-			const tempFile: QuickAccessFile = {
-				...file,
-				granularity: granularity
-			};
-			// 서브메뉴에서 선택한 경우이므로 ALL 버튼(file.id)을 활성화
-			const filePath = getJournalNotePath(granularity);
-			this.updateActiveButton(filePath, file.id); // ALL 버튼의 ID 전달
-			this.onFileSelect(tempFile);
-			
-			// 서브메뉴 닫기
-			this.closeSubmenu();
-		});
-		});
-	}
 
-	private toggleSubmenu(button: HTMLElement) {
-		const submenu = button.querySelector('.synaptic-journal-submenu') as HTMLElement;
-		if (!submenu) return;
-		
-		// 이미 열려있는 서브메뉴가 있으면 닫기
-		if (this.openedSubmenu && this.openedSubmenu !== submenu) {
-			this.openedSubmenu.removeClass('synaptic-submenu-opened');
-		}
-		
-		// 현재 서브메뉴 토글
-		if (this.openedSubmenu === submenu) {
-			submenu.removeClass('synaptic-submenu-opened');
-			this.openedSubmenu = null;
-		} else {
-			submenu.addClass('synaptic-submenu-opened');
-			this.openedSubmenu = submenu;
-		}
-	}
-
-	private closeSubmenu() {
-		if (this.openedSubmenu) {
-			this.openedSubmenu.removeClass('synaptic-submenu-opened');
-			this.openedSubmenu = null;
-		}
-	}
 
 	private async openInEditMode(filePath: string) {
 		const file = this.app.vault.getAbstractFileByPath(filePath);
