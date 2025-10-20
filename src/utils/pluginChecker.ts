@@ -106,6 +106,22 @@ export function getAvailableGranularities(): JournalGranularity[] {
 }
 
 /**
+ * Calendar 기능이 의미 있게 사용 가능한지 확인
+ * - 주/월/분기/연간 중 하나라도 사용 가능하거나, 커뮤니티 Calendar 플러그인이 활성화된 경우
+ */
+export function isCalendarFeatureAvailable(app?: App): boolean {
+    const granularitiesAvailable = (
+        isGranularityAvailable('day') ||
+        isGranularityAvailable('week') ||
+        isGranularityAvailable('month') ||
+        isGranularityAvailable('quarter') ||
+        isGranularityAvailable('year')
+    );
+    const communityCalendar = app ? isPluginEnabled(app, 'calendar') : false;
+    return granularitiesAvailable || communityCalendar;
+}
+
+/**
  * Daily Note format 정보 가져오기
  * obsidian-daily-notes-interface를 통해 설정 가져오기
  * @returns format 패턴 문자열 (예: "YYYY-MM-DD(ddd)") 또는 기본값

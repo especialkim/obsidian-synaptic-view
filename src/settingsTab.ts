@@ -3,7 +3,7 @@ import SynapticViewPlugin from '../main';
 import { QuickAccessFile, JournalGranularity } from './settings';
 import { IconPickerModal } from './ui/iconPickerModal';
 import { FilePathSuggest } from './ui/filePathSuggest';
-import { isJournalAvailable, getAvailableGranularities } from './utils/pluginChecker';
+import { isJournalAvailable, getAvailableGranularities, isCalendarFeatureAvailable } from './utils/pluginChecker';
 
 export class SynapticViewSettingTab extends PluginSettingTab {
 	plugin: SynapticViewPlugin;
@@ -133,18 +133,26 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 			dropdown.addOption('journal', 'Journal');
 		}
 		
-		// Calendar 옵션 추가
-		dropdown.addOption('calendar', 'Calendar');
+        // Calendar 옵션은 관련 기능이 하나라도 가능할 때만 추가
+        const isCalendarActive = isCalendarFeatureAvailable(this.app);
+        if (isCalendarActive) {
+            dropdown.addOption('calendar', 'Calendar');
+        }
 		
 		dropdown
 			.setValue(file.type)
 			.onChange(async (value) => {
 				
-				if (value === 'journal' && !isJournalActive) {
+                if (value === 'journal' && !isJournalActive) {
 					// Journal 기능이 비활성화되어 있으면 경고
 					dropdown.setValue(file.type);
 					return;
 				}
+                if (value === 'calendar' && !isCalendarActive) {
+                    // Calendar 기능이 비활성화되어 있으면 선택 불가
+                    dropdown.setValue(file.type);
+                    return;
+                }
 				
 				file.type = value as 'file' | 'web' | 'calendar' | 'journal';
 				

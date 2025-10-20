@@ -328,9 +328,14 @@
 /* Calendar 요일 헤더 */
 .synaptic-calendar-weekdays {
 	display: grid;
-	grid-template-columns: 2em repeat(7, 1fr);
+	grid-template-columns: repeat(7, 1fr);
 	gap: 0.25em;
 	margin-bottom: 0.5em;
+}
+
+/* 주차 열이 있는 경우 첫 컬럼 확장 */
+.has-week .synaptic-calendar-weekdays {
+	grid-template-columns: 2em repeat(7, 1fr);
 }
 
 .synaptic-calendar-weekday {
@@ -357,11 +362,15 @@
 
 .synaptic-calendar-week {
 	display: grid;
-	grid-template-columns: 2em repeat(7, 1fr);
+	grid-template-columns: repeat(7, 1fr);
 	gap: 0.25em;
 	border-radius: 4px;
 	padding: 0;
 	transition: all 0.15s ease;
+}
+
+.has-week .synaptic-calendar-week {
+	grid-template-columns: 2em repeat(7, 1fr);
 }
 
 .synaptic-calendar-week:hover .synaptic-calendar-week-number {

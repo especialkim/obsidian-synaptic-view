@@ -1,5 +1,23 @@
 import { App, moment, Notice, setIcon } from 'obsidian';
 import { SynapticViewSettings, QuickAccessFile } from '../settings';
+import { isGranularityAvailable } from '../utils/pluginChecker';
+import {
+	createDailyNote,
+	createWeeklyNote,
+	createMonthlyNote,
+	createQuarterlyNote,
+	createYearlyNote,
+	getDailyNote,
+	getWeeklyNote,
+	getMonthlyNote,
+	getQuarterlyNote,
+	getYearlyNote,
+	getAllDailyNotes,
+	getAllWeeklyNotes,
+	getAllMonthlyNotes,
+	getAllQuarterlyNotes,
+	getAllYearlyNotes
+} from 'obsidian-daily-notes-interface';
 
 export class CalendarSubmenu {
 	private app: App;
@@ -30,8 +48,19 @@ export class CalendarSubmenu {
 	/**
 	 * 달력 렌더링
 	 */
-	private renderCalendar(container: HTMLElement) {
+    private renderCalendar(container: HTMLElement) {
 		container.empty();
+        // Determine availability based on user's periodic notes settings
+        const hasWeek = isGranularityAvailable('week');
+        const hasQuarter = isGranularityAvailable('quarter');
+        const hasMonth = isGranularityAvailable('month');
+        const hasYear = isGranularityAvailable('year');
+        // Toggle layout class for week column
+        if (hasWeek) {
+            container.addClass('has-week');
+        } else {
+            container.removeClass('has-week');
+        }
 		
 		// 헤더 (년도/월 네비게이션)
 		const header = container.createDiv({ cls: 'synaptic-calendar-header' });
@@ -55,21 +84,29 @@ export class CalendarSubmenu {
 			this.renderCalendar(container);
 		});
 		
-		// 년도 표시 (클릭 가능)
+        // 년도 표시 (클릭 시: 사용 가능하면 열기, 아니면 Notice)
 		const yearEl = header.createDiv({ cls: 'synaptic-calendar-year' });
 		yearEl.textContent = this.currentDate.format('YYYY');
-		yearEl.title = '년간 노트 열기';
-		yearEl.addEventListener('click', () => {
-			this.onYearClick(this.currentDate);
-		});
+        yearEl.title = hasYear ? '년간 노트 열기' : '년간 노트가 설정되지 않았습니다';
+        yearEl.addEventListener('click', () => {
+            if (hasYear) {
+                this.onYearClick(this.currentDate);
+            } else {
+                new Notice('📅 년간 노트가 설정되지 않았습니다. Periodic Notes 또는 Yearly 설정을 확인하세요.');
+            }
+        });
 		
-		// 월 표시 (클릭 가능)
+        // 월 표시 (클릭 시: 사용 가능하면 열기, 아니면 Notice)
 		const monthEl = header.createDiv({ cls: 'synaptic-calendar-month' });
 		monthEl.textContent = this.currentDate.format('M월');
-		monthEl.title = '월간 노트 열기';
-		monthEl.addEventListener('click', () => {
-			this.onMonthClick(this.currentDate);
-		});
+        monthEl.title = hasMonth ? '월간 노트 열기' : '월간 노트가 설정되지 않았습니다';
+        monthEl.addEventListener('click', () => {
+            if (hasMonth) {
+                this.onMonthClick(this.currentDate);
+            } else {
+                new Notice('📅 월간 노트가 설정되지 않았습니다. Periodic Notes 또는 Monthly 설정을 확인하세요.');
+            }
+        });
 		
 		// 다음 월 버튼
 		const nextMonthBtn = header.createDiv({ cls: 'synaptic-calendar-nav-btn' });
@@ -90,24 +127,28 @@ export class CalendarSubmenu {
 			this.renderCalendar(container);
 		});
 		
-		// 분기 버튼들
-		const quarters = container.createDiv({ cls: 'synaptic-calendar-quarters' });
-		const quarterLabels = ['1Q', '2Q', '3Q', '4Q'];
-		quarterLabels.forEach((quarter, index) => {
-			const quarterBtn = quarters.createDiv({ cls: 'synaptic-calendar-quarter-btn' });
-			quarterBtn.textContent = quarter;
-			quarterBtn.title = `${quarter} 분기 노트 열기`;
-			quarterBtn.addEventListener('click', () => {
-				this.onQuarterClick(this.currentDate.year(), index + 1);
-			});
-		});
+        // 분기 버튼들 (사용 시에만 표시)
+        if (hasQuarter) {
+            const quarters = container.createDiv({ cls: 'synaptic-calendar-quarters' });
+            const quarterLabels = ['1Q', '2Q', '3Q', '4Q'];
+            quarterLabels.forEach((quarter, index) => {
+                const quarterBtn = quarters.createDiv({ cls: 'synaptic-calendar-quarter-btn' });
+                quarterBtn.textContent = quarter;
+                quarterBtn.title = `${quarter} 분기 노트 열기`;
+                quarterBtn.addEventListener('click', () => {
+                    this.onQuarterClick(this.currentDate.year(), index + 1);
+                });
+            });
+        }
 		
-		// 요일 헤더
-		const weekdays = container.createDiv({ cls: 'synaptic-calendar-weekdays' });
-		
-		// 주차 열 헤더 (빈 공간)
-		const weekNumHeader = weekdays.createDiv({ cls: 'synaptic-calendar-weekday synaptic-calendar-weekday-week' });
-		weekNumHeader.textContent = 'W';
+        // 요일 헤더
+        const weekdays = container.createDiv({ cls: 'synaptic-calendar-weekdays' });
+        
+        // 주차 열 헤더 (주간 노트 사용 시에만)
+        if (hasWeek) {
+            const weekNumHeader = weekdays.createDiv({ cls: 'synaptic-calendar-weekday synaptic-calendar-weekday-week' });
+            weekNumHeader.textContent = 'W';
+        }
 		
 		const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 		dayNames.forEach(day => {
@@ -133,23 +174,25 @@ export class CalendarSubmenu {
 		
 		while (current.isSameOrBefore(endOfWeek)) {
 			// 새로운 주 시작
-			if (current.day() === 0 || weekRow === null) {
+            if (current.day() === 0 || weekRow === null) {
 				weekRow = calendarGrid.createDiv({ cls: 'synaptic-calendar-week' });
 				weekStart = current.clone();
 				const capturedWeekStart = weekStart.clone();
 				
-				// 주차 번호 표시 (첫 번째 열)
-				const weekNumEl = weekRow.createDiv({ cls: 'synaptic-calendar-week-number' });
-				weekNumEl.textContent = current.format('ww');
-				weekNumEl.title = `${current.format('gggg-[W]ww')} 주간 노트 열기`;
-				
-				// 주차 번호 클릭 이벤트
-				weekNumEl.addEventListener('click', (e) => {
-					e.stopPropagation();
-					if (capturedWeekStart) {
-						this.onWeekClick(capturedWeekStart);
-					}
-				});
+                // 주차 번호 표시 (주간 노트 사용 시에만)
+                if (hasWeek) {
+                    const weekNumEl = weekRow.createDiv({ cls: 'synaptic-calendar-week-number' });
+                    weekNumEl.textContent = current.format('ww');
+                    weekNumEl.title = `${current.format('gggg-[W]ww')} 주간 노트 열기`;
+                    
+                    // 주차 번호 클릭 이벤트
+                    weekNumEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (capturedWeekStart) {
+                            this.onWeekClick(capturedWeekStart);
+                        }
+                    });
+                }
 			}
 			
 			const dayEl = weekRow.createDiv({ cls: 'synaptic-calendar-day' });
@@ -182,51 +225,120 @@ export class CalendarSubmenu {
 	/**
 	 * 날짜 클릭 처리
 	 */
-	private onDayClick(date: moment.Moment) {
-		const dateStr = date.format('YYYY-MM-DD');
-		new Notice(`📅 ${dateStr} 데일리 노트를 엽니다`);
-		console.log('[Calendar] 날짜 클릭:', dateStr);
-		// TODO: 해당 날짜의 Daily Note 열기
+	private async onDayClick(date: moment.Moment) {
+		try {
+			const allDailyNotes = getAllDailyNotes();
+			let file = getDailyNote(date, allDailyNotes);
+			
+			if (!file) {
+				file = await createDailyNote(date);
+			}
+			
+			if (file) {
+				await this.app.workspace.getLeaf().openFile(file);
+			} else {
+				new Notice('📅 데일리 노트를 열 수 없습니다.');
+			}
+		} catch (error) {
+			console.error('[Calendar] 데일리 노트 열기 실패:', error);
+			new Notice('📅 데일리 노트를 여는 중 오류가 발생했습니다.');
+		}
 	}
 
 	/**
 	 * 주간 클릭 처리
 	 */
-	private onWeekClick(date: moment.Moment) {
-		const weekStr = date.format('gggg-[W]ww');
-		new Notice(`📅 ${weekStr} 주간 노트를 엽니다`);
-		console.log('[Calendar] 주간 클릭:', weekStr);
-		// TODO: 해당 주의 Weekly Note 열기
+	private async onWeekClick(date: moment.Moment) {
+		try {
+			const allWeeklyNotes = getAllWeeklyNotes();
+			let file = getWeeklyNote(date, allWeeklyNotes);
+			
+			if (!file) {
+				file = await createWeeklyNote(date);
+			}
+			
+			if (file) {
+				await this.app.workspace.getLeaf().openFile(file);
+			} else {
+				new Notice('📅 주간 노트를 열 수 없습니다.');
+			}
+		} catch (error) {
+			console.error('[Calendar] 주간 노트 열기 실패:', error);
+			new Notice('📅 주간 노트를 여는 중 오류가 발생했습니다.');
+		}
 	}
 
 	/**
 	 * 년간 클릭 처리
 	 */
-	private onYearClick(date: moment.Moment) {
-		const yearStr = date.format('YYYY');
-		new Notice(`📅 ${yearStr} 년간 노트를 엽니다`);
-		console.log('[Calendar] 년간 클릭:', yearStr);
-		// TODO: 해당 년도의 Yearly Note 열기
+	private async onYearClick(date: moment.Moment) {
+		try {
+			const allYearlyNotes = getAllYearlyNotes();
+			let file = getYearlyNote(date, allYearlyNotes);
+			
+			if (!file) {
+				file = await createYearlyNote(date);
+			}
+			
+			if (file) {
+				await this.app.workspace.getLeaf().openFile(file);
+			} else {
+				new Notice('📅 년간 노트를 열 수 없습니다.');
+			}
+		} catch (error) {
+			console.error('[Calendar] 년간 노트 열기 실패:', error);
+			new Notice('📅 년간 노트를 여는 중 오류가 발생했습니다.');
+		}
 	}
 
 	/**
 	 * 월간 클릭 처리
 	 */
-	private onMonthClick(date: moment.Moment) {
-		const monthStr = date.format('YYYY-MM');
-		new Notice(`📅 ${monthStr} 월간 노트를 엽니다`);
-		console.log('[Calendar] 월간 클릭:', monthStr);
-		// TODO: 해당 월의 Monthly Note 열기
+	private async onMonthClick(date: moment.Moment) {
+		try {
+			const allMonthlyNotes = getAllMonthlyNotes();
+			let file = getMonthlyNote(date, allMonthlyNotes);
+			
+			if (!file) {
+				file = await createMonthlyNote(date);
+			}
+			
+			if (file) {
+				await this.app.workspace.getLeaf().openFile(file);
+			} else {
+				new Notice('📅 월간 노트를 열 수 없습니다.');
+			}
+		} catch (error) {
+			console.error('[Calendar] 월간 노트 열기 실패:', error);
+			new Notice('📅 월간 노트를 여는 중 오류가 발생했습니다.');
+		}
 	}
 
 	/**
 	 * 분기 클릭 처리
 	 */
-	private onQuarterClick(year: number, quarter: number) {
-		const quarterStr = `${year}-Q${quarter}`;
-		new Notice(`📅 ${quarterStr} 분기 노트를 엽니다`);
-		console.log('[Calendar] 분기 클릭:', quarterStr);
-		// TODO: 해당 분기의 Quarterly Note 열기
+	private async onQuarterClick(year: number, quarter: number) {
+		try {
+			// 분기의 첫 월을 기준으로 moment 생성
+			const firstMonth = (quarter - 1) * 3;
+			const date = moment().year(year).month(firstMonth).startOf('month');
+			
+			const allQuarterlyNotes = getAllQuarterlyNotes();
+			let file = getQuarterlyNote(date, allQuarterlyNotes);
+			
+			if (!file) {
+				file = await createQuarterlyNote(date);
+			}
+			
+			if (file) {
+				await this.app.workspace.getLeaf().openFile(file);
+			} else {
+				new Notice('📅 분기 노트를 열 수 없습니다.');
+			}
+		} catch (error) {
+			console.error('[Calendar] 분기 노트 열기 실패:', error);
+			new Notice('📅 분기 노트를 여는 중 오류가 발생했습니다.');
+		}
 	}
 
 	/**
