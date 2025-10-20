@@ -14,6 +14,7 @@ export class SynapticView {
 	private settings: SynapticViewSettings;
 	private floatingButtonManager: FloatingButtonManager | null = null;
 	private currentFilePath: string | null = null;
+	private isQuickAccessNavigation: boolean = false;
 
 	constructor(app: App, settings: SynapticViewSettings) {
 		this.app = app;
@@ -96,6 +97,9 @@ export class SynapticView {
 	async loadFile(leaf: WorkspaceLeaf, quickAccessFile: QuickAccessFile, isInitialLoad: boolean) {
 		console.log('[SynapticView.loadFile] 시작 - quickAccessFile:', quickAccessFile);
 		
+		// QuickAccess를 통한 탐색임을 표시
+		this.isQuickAccessNavigation = true;
+		
 		// Journal Note 타입이면 granularity에 따라 경로를 동적으로 계산
 		let filePath = quickAccessFile.filePath;
 		let granularity: JournalGranularity = 'day';
@@ -161,6 +165,9 @@ export class SynapticView {
 					// 초기 로드 시 활성 버튼 ID 설정
 					const activeButtonId = isInitialLoad ? quickAccessFile.id : null;
 					this.addContainerUI(leaf, filePath, activeButtonId);
+					
+					// QuickAccess 탐색 플래그 리셋
+					this.isQuickAccessNavigation = false;
 				}, 50);
 			}
 		} else if (quickAccessFile.type === 'web') {
@@ -183,8 +190,18 @@ export class SynapticView {
 				// 초기 로드 시 활성 버튼 ID 설정
 				const activeButtonId = isInitialLoad ? quickAccessFile.id : null;
 				this.addContainerUI(leaf, filePath, activeButtonId);
+				
+				// QuickAccess 탐색 플래그 리셋
+				this.isQuickAccessNavigation = false;
 			}, 100);
 		}
+	}
+	
+	/**
+	 * QuickAccess를 통한 탐색인지 확인
+	 */
+	isQuickAccessNavigationActive(): boolean {
+		return this.isQuickAccessNavigation;
 	}
 
 	/**

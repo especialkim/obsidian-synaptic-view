@@ -63,9 +63,9 @@ export class FloatingButtonManager {
 		createButton.setAttribute('aria-label', '새 파일 생성');
 		setIcon(createButton, 'file-plus');
 		setTooltip(createButton, '새 파일 생성', { delay: 100 });
-		createButton.addEventListener('click', (e) => {
+		createButton.addEventListener('click', async (e) => {
 			e.stopPropagation();
-			createNewFile(this.app);
+			await createNewFile(this.app);
 		});
 
 		// 파일 검색

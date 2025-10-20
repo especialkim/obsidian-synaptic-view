@@ -19,6 +19,13 @@ export class EmptyStateViewManager {
 		this.settings = settings;
 		this.component = new Component();
 		this.component.load();
+		
+		// file-open 이벤트 감지: QuickAccess 외의 방법으로 파일을 열면 Synaptic View 속성 제거
+		this.component.registerEvent(
+			this.app.workspace.on('file-open', (file) => {
+				this.handleFileOpen(file);
+			})
+		);
 	}
 
 	async customizeEmptyState() {
@@ -65,6 +72,67 @@ export class EmptyStateViewManager {
 			
 			console.log('[EmptyStateViewManager] Synaptic View 초기화 완료');
 		}
+	}
+
+	/**
+	 * file-open 이벤트 핸들러
+	 * QuickAccess를 통하지 않은 파일 열기 시 Synaptic View 속성 제거
+	 */
+	private handleFileOpen(file: TFile | null) {
+		console.log('[EmptyStateViewManager.handleFileOpen] 파일 열림:', file?.path);
+		
+		if (!file) return;
+		
+		// 활성화된 leaf 확인
+		const activeLeaf = this.app.workspace.activeLeaf;
+		if (!activeLeaf) return;
+		
+		const container = activeLeaf.view.containerEl;
+		if (!container) return;
+		
+		// Synaptic View로 관리되는 컨테이너인지 확인
+		if (!container.hasClass('synaptic-viewer-container')) return;
+		
+		// 해당 leaf의 SynapticView 인스턴스 확인
+		const synapticView = this.synapticViews.get(activeLeaf);
+		if (!synapticView) {
+			console.log('[EmptyStateViewManager.handleFileOpen] SynapticView 인스턴스 없음');
+			return;
+		}
+		
+		// QuickAccess를 통한 탐색인지 확인
+		if (synapticView.isQuickAccessNavigationActive()) {
+			console.log('[EmptyStateViewManager.handleFileOpen] QuickAccess 탐색 - 유지');
+			return;
+		}
+		
+		// QuickAccess가 아닌 다른 방법으로 파일을 열었으면 Synaptic View 속성 제거
+		console.log('[EmptyStateViewManager.handleFileOpen] 일반 파일 탐색 감지 - Synaptic View 속성 제거');
+		
+		// data-synaptic-managed 제거
+		container.removeAttribute('data-synaptic-managed');
+		
+		// synaptic-viewer-container 클래스 제거
+		container.removeClass('synaptic-viewer-container');
+		
+		// 스타일 클래스 제거
+		container.removeClass('hide-inline-title');
+		container.removeClass('hide-embedded-mentions');
+		
+		// 플로팅 버튼 제거
+		const viewContent = container.querySelector('.view-content');
+		if (viewContent) {
+			const floatingButtons = viewContent.querySelector('.synaptic-action-buttons');
+			if (floatingButtons) {
+				floatingButtons.remove();
+				console.log('[EmptyStateViewManager.handleFileOpen] 플로팅 버튼 제거');
+			}
+		}
+		
+		// synapticViews Map에서 제거
+		this.synapticViews.delete(activeLeaf);
+		
+		console.log('[EmptyStateViewManager.handleFileOpen] Synaptic View 속성 제거 완료');
 	}
 
 	private showSetupMessage(container: HTMLElement) {
