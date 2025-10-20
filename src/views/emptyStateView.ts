@@ -1,7 +1,8 @@
 import { App, TFile, Component, WorkspaceLeaf, setIcon } from 'obsidian';
-import { SynapticViewSettings, QuickAccessFile } from '../settings';
+import { SynapticViewSettings, QuickAccessFile, JournalGranularity } from '../settings';
 import { FloatingButtonManager } from '../ui/floatingButton';
 import { openPluginSettings } from '../utils/openSettings';
+import { getJournalNotePath, createJournalNote } from '../utils/pluginChecker';
 
 export class EmptyStateViewManager {
 	private app: App;
@@ -52,20 +53,24 @@ export class EmptyStateViewManager {
 				emptyState.addClass('synaptic-empty-state');
 				this.showSetupMessage(emptyState as HTMLElement);
 				
-				// 플로팅 버튼 추가 (기본 버튼 + 설정 버튼)
-				const existingButtons = container.querySelector('.synaptic-action-buttons');
-				if (existingButtons) {
-					existingButtons.remove();
-				}
-				
-				this.floatingButtonManager = new FloatingButtonManager(
-					this.app,
-					this.settings,
-					(qaf) => this.loadFile(leaf, qaf),
-					null
-				);
-				this.floatingButtonManager.addFloatingButton(container);
-				continue;
+			// 플로팅 버튼 추가 (기본 버튼 + 설정 버튼)
+			const existingButtons = container.querySelector('.synaptic-action-buttons');
+			if (existingButtons) {
+				existingButtons.remove();
+			}
+			
+			// 이전 FloatingButtonManager의 currentActiveButtonId 저장
+			const previousActiveButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
+			
+			this.floatingButtonManager = new FloatingButtonManager(
+				this.app,
+				this.settings,
+				(qaf) => this.loadFile(leaf, qaf),
+				null,
+				previousActiveButtonId  // 이전 활성 버튼 ID 전달
+			);
+			this.floatingButtonManager.addFloatingButton(container);
+			continue;
 			}
 			
 		// enabledFiles.length > 0 인 경우
@@ -74,18 +79,50 @@ export class EmptyStateViewManager {
 		console.log('[customizeEmptyState] 로드할 항목:', quickAccessFileToLoad);
 		
 		// Type에 따라 다르게 처리
-		if (quickAccessFileToLoad.type === 'file') {
-				this.currentFilePath = quickAccessFileToLoad.filePath;
-				const file = this.app.vault.getAbstractFileByPath(quickAccessFileToLoad.filePath);
-				console.log('[customizeEmptyState] 파일 찾기 결과:', file);
+		if (quickAccessFileToLoad.type === 'file' || quickAccessFileToLoad.type === 'journal') {
+		// Journal Note 타입이면 granularity에 따라 경로를 동적으로 계산
+		let filePathToLoad = quickAccessFileToLoad.filePath;
+		if (quickAccessFileToLoad.type === 'journal') {
+			const granularity = quickAccessFileToLoad.granularity || 'day';
+			
+			// 'all'은 아직 구현 안 됨 - 건너뛰기
+			if (granularity === 'all') {
+				console.log('[customizeEmptyState] All granularity는 아직 구현되지 않았습니다');
+				continue;
+			}
+			
+			filePathToLoad = getJournalNotePath(granularity);
+			console.log(`[customizeEmptyState] ${granularity} Journal Note 경로:`, filePathToLoad);
+		}
+		
+		this.currentFilePath = filePathToLoad;
+		let file = this.app.vault.getAbstractFileByPath(filePathToLoad);
+		console.log(`[customizeEmptyState] ${quickAccessFileToLoad.type} 파일 찾기 결과:`, file);
+		
+		// Journal Note 타입이고 파일이 없으면 granularity에 맞게 생성
+		if (!file && quickAccessFileToLoad.type === 'journal') {
+			const granularity = quickAccessFileToLoad.granularity || 'day';
+			console.log(`[customizeEmptyState] ${granularity} Journal Note 파일이 없어서 생성합니다`);
+			file = await createJournalNote(granularity);
+			if (!file) {
+				console.error(`[customizeEmptyState] ${granularity} Journal Note 생성 실패`);
+				continue;
+			}
+			console.log(`[customizeEmptyState] ${granularity} Journal Note 생성 완료:`, file);
+			// 생성된 파일의 실제 경로로 업데이트
+			filePathToLoad = file.path;
+			this.currentFilePath = filePathToLoad;
+		}
 				
 				if (file instanceof TFile) {
-					console.log('[customizeEmptyState] TFile 확인, leaf.openFile 호출');
+					console.log(`[customizeEmptyState] ${quickAccessFileToLoad.type} TFile 확인, leaf.openFile 호출`);
 					// 빈 탭에 실제로 파일을 Obsidian 뷰어로 열기 (읽기 모드)
 					await leaf.openFile(file, { state: { mode: 'preview' } });
 					console.log('[customizeEmptyState] leaf.openFile 완료');
 					
-					const iconName = quickAccessFileToLoad.icon || 'file-text';
+					// 타입에 따른 기본 아이콘 설정
+					const defaultIcon = quickAccessFileToLoad.type === 'journal' ? 'calendar-days' : 'file-text';
+					const iconName = quickAccessFileToLoad.icon || defaultIcon;
 					console.log('[customizeEmptyState] 아이콘:', iconName);
 					
 					// DOM이 업데이트될 때까지 기다린 후 뷰 타이틀 변경
@@ -109,11 +146,15 @@ export class EmptyStateViewManager {
 								existingButtons.remove();
 							}
 							
+							// 이전 FloatingButtonManager의 currentActiveButtonId 저장
+							const previousActiveButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
+							
 							this.floatingButtonManager = new FloatingButtonManager(
 								this.app,
 								this.settings,
 								(qaf) => this.loadFile(leaf, qaf),
-								this.currentFilePath
+								this.currentFilePath,
+								previousActiveButtonId  // 이전 활성 버튼 ID 전달
 							);
 							this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
 						}
@@ -151,11 +192,15 @@ export class EmptyStateViewManager {
 							existingButtons.remove();
 						}
 						
+						// 이전 FloatingButtonManager의 currentActiveButtonId 저장
+						const previousActiveButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
+						
 						this.floatingButtonManager = new FloatingButtonManager(
 							this.app,
 							this.settings,
 							(qaf) => this.loadFile(leaf, qaf),
-							this.currentFilePath
+							this.currentFilePath,
+							previousActiveButtonId  // 이전 활성 버튼 ID 전달
 						);
 						this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
 					}
@@ -193,12 +238,25 @@ export class EmptyStateViewManager {
 	private cleanupNonSynapticTabs() {
 		console.log('[cleanupNonSynapticTabs] Synaptic View 클래스 정리 시작');
 		
-		// Quick Access 파일 경로 목록 준비
-		const quickAccessPaths = this.settings.quickAccessFiles
-			.filter(f => f.enabled)
-			.map(f => f.filePath);
+	// Quick Access 파일 경로 목록 준비
+	const quickAccessPaths = this.settings.quickAccessFiles
+		.filter(f => f.enabled)
+	.map(f => {
+		// journal 타입이면 granularity에 따라 경로를 동적으로 계산
+		if (f.type === 'journal') {
+			const granularity = f.granularity || 'day';
+			return getJournalNotePath(granularity);
+		}
+		return f.filePath;
+	});
+	
+	// 현재 열린 파일 경로도 Quick Access 파일로 인식
+	if (this.currentFilePath) {
+		quickAccessPaths.push(this.currentFilePath);
+	}
 		
 		console.log('[cleanupNonSynapticTabs] Quick Access 파일 경로:', quickAccessPaths);
+		console.log('[cleanupNonSynapticTabs] 현재 파일 경로:', this.currentFilePath);
 		
 		// 모든 leaf를 순회하면서 정리
 		this.app.workspace.iterateAllLeaves(leaf => {
@@ -355,17 +413,47 @@ export class EmptyStateViewManager {
 	private async loadFile(leaf: WorkspaceLeaf, quickAccessFile: QuickAccessFile) {
 		console.log('[loadFile] 시작 - quickAccessFile:', quickAccessFile);
 		
-		const filePath = quickAccessFile.filePath;
-		const iconName = quickAccessFile.icon || 'file-text';
+	// Journal Note 타입이면 granularity에 따라 경로를 동적으로 계산
+	let filePath = quickAccessFile.filePath;
+	let granularity: JournalGranularity = 'day';
+	if (quickAccessFile.type === 'journal') {
+		granularity = quickAccessFile.granularity || 'day';
 		
-		// Type에 따라 다르게 처리
-		if (quickAccessFile.type === 'file') {
-			// File 타입: Obsidian 파일 열기
-			const file = this.app.vault.getAbstractFileByPath(filePath);
-			console.log('[loadFile] 파일 찾기 결과:', file);
+		// 'all'은 아직 구현 안 됨 - 임시로 빈 경로
+		if (granularity === 'all') {
+			console.log('[loadFile] All granularity는 아직 구현되지 않았습니다');
+			return;
+		}
+		
+		filePath = getJournalNotePath(granularity);
+		console.log(`[loadFile] ${granularity} Journal Note 경로:`, filePath);
+	}
+	
+	// 타입에 따른 기본 아이콘 설정
+	const defaultIcon = quickAccessFile.type === 'journal' ? 'calendar-days' : 'file-text';
+	const iconName = quickAccessFile.icon || defaultIcon;
+	
+	// Type에 따라 다르게 처리
+	if (quickAccessFile.type === 'file' || quickAccessFile.type === 'journal') {
+		// File/Journal Note 타입: Obsidian 파일 열기
+		let file = this.app.vault.getAbstractFileByPath(filePath);
+		console.log(`[loadFile] ${quickAccessFile.type} 파일 찾기 결과:`, file);
+
+		// Journal Note 타입이고 파일이 없으면 granularity에 맞게 생성
+		if (!file && quickAccessFile.type === 'journal') {
+			console.log(`[loadFile] ${granularity} Journal Note 파일이 없어서 생성합니다`);
+			file = await createJournalNote(granularity);
+			if (!file) {
+				console.error(`[loadFile] ${granularity} Journal Note 생성 실패`);
+				return;
+			}
+			console.log(`[loadFile] ${granularity} Journal Note 생성 완료:`, file);
+			// 생성된 파일의 실제 경로로 업데이트
+			filePath = file.path;
+		}
 
 			if (file instanceof TFile) {
-				console.log('[loadFile] TFile 확인');
+				console.log(`[loadFile] ${quickAccessFile.type} TFile 확인`);
 				this.currentFilePath = filePath;
 				
 				// 실제로 Obsidian 뷰어로 파일 열기 (읽기 모드)
@@ -411,24 +499,28 @@ export class EmptyStateViewManager {
 		if (container) {
 			this.applySynapticViewClasses(container);
 			
-			// .view-content 내부에 버튼 추가
-			const viewContent = container.querySelector('.view-content');
-			if (viewContent) {
-				// 기존 버튼 제거
-				const existingButtons = viewContent.querySelector('.synaptic-action-buttons');
-				if (existingButtons) {
-					existingButtons.remove();
-				}
-				
-				// 새 버튼 추가
-				this.floatingButtonManager = new FloatingButtonManager(
-					this.app,
-					this.settings,
-					(qaf) => this.loadFile(leaf, qaf),
-					filePath
-				);
-				this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
+		// .view-content 내부에 버튼 추가
+		const viewContent = container.querySelector('.view-content');
+		if (viewContent) {
+			// 기존 버튼 제거
+			const existingButtons = viewContent.querySelector('.synaptic-action-buttons');
+			if (existingButtons) {
+				existingButtons.remove();
 			}
+			
+			// 이전 FloatingButtonManager의 currentActiveButtonId 저장
+			const previousActiveButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
+			
+			// 새 버튼 추가
+			this.floatingButtonManager = new FloatingButtonManager(
+				this.app,
+				this.settings,
+				(qaf) => this.loadFile(leaf, qaf),
+				filePath,
+				previousActiveButtonId  // 이전 활성 버튼 ID 전달
+			);
+			this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
+		}
 		}
 	}
 }
