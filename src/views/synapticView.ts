@@ -259,6 +259,9 @@ export class SynapticView {
 		// 기본 Synaptic View 클래스 추가
 		container.addClass('synaptic-viewer-container');
 		
+		// Synaptic View로 관리되는 탭임을 표시 (cleanup 시 보호됨)
+		container.setAttribute('data-synaptic-managed', 'true');
+		
 		// 스타일 옵션에 따라 추가 클래스 적용
 		if (this.settings.hideInlineTitle) {
 			container.addClass('hide-inline-title');

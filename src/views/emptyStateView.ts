@@ -117,6 +117,13 @@ export class EmptyStateViewManager {
 			if (container.hasClass('synaptic-viewer-container')) {
 				console.log('[EmptyStateViewManager] Synaptic 컨테이너 발견, leaf 타입:', leaf.view.getViewType());
 				
+				// Synaptic View로 관리되는 leaf는 건드리지 않음
+				// (data-synaptic-managed attribute로 표시됨)
+				if (container.getAttribute('data-synaptic-managed') === 'true') {
+					console.log('[EmptyStateViewManager] Synaptic View로 관리되는 leaf - 유지');
+					return;
+				}
+				
 				// 현재 leaf에 열린 파일 확인
 				const file = (leaf.view as any).file as TFile | undefined;
 				const filePath = file?.path || null;
