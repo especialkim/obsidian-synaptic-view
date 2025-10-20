@@ -31,8 +31,8 @@ export class FloatingButtonManager {
 		this.onFileSelect = onFileSelect;
 		this.currentFilePath = currentFilePath;
 		this.currentActiveButtonId = currentActiveButtonId;
-        this.calendarSubmenu = new CalendarSubmenu(app, settings, onFileSelect);
-        this.journalSubmenu = new JournalSubmenu(app, settings, onFileSelect, (filePath: string, activeButtonId?: string) => this.updateActiveButton(filePath, activeButtonId));
+		this.calendarSubmenu = new CalendarSubmenu(app, settings, onFileSelect, (filePath: string, activeButtonId?: string) => this.updateActiveButton(filePath, activeButtonId));
+		this.journalSubmenu = new JournalSubmenu(app, settings, onFileSelect, (filePath: string, activeButtonId?: string) => this.updateActiveButton(filePath, activeButtonId));
 	}
 
 	addFloatingButton(container: HTMLElement) {
@@ -194,15 +194,16 @@ export class FloatingButtonManager {
 	
     // 마우스 호버 이벤트 (편집 모드용)
     button.addEventListener('mouseenter', () => {
-		// currentFilePath가 있고, file 또는 journal 타입만 편집 가능
+		// currentFilePath가 있고, file/journal/calendar 타입 편집 가능
 		if (this.isModifierKeyPressed && 
 		    this.currentFilePath && 
-		    (file.type === 'file' || file.type === 'journal')) {
+		    (file.type === 'file' || file.type === 'journal' || file.type === 'calendar')) {
 			const isAllButton = file.type === 'journal' && (file.granularity === 'all');
+			const isCalendarButton = file.type === 'calendar';
 			const isActive = button.hasClass('synaptic-action-button-active');
 			
-			if (isAllButton) {
-				// ALL 버튼이 활성화되어 있으면 편집 아이콘 표시
+			if (isAllButton || isCalendarButton) {
+				// ALL 또는 Calendar 버튼이 활성화되어 있으면 편집 아이콘 표시
 				if (isActive) {
 					this.showEditIcon(button);
 				}
@@ -219,12 +220,6 @@ export class FloatingButtonManager {
 	button.addEventListener('click', (e) => {
 		e.stopPropagation();
 		
-		// Calendar 타입은 아직 기능 없음
-		if (file.type === 'calendar') {
-			console.log('[Calendar] 기능 구현 예정');
-			return;
-		}
-		
 		// // All 버튼 클릭 시 서브메뉴 토글 (주석 처리 - hover로만 작동)
 		// const buttonGranularity = button.getAttribute('data-granularity');
 		// if (file.type === 'journal' && buttonGranularity === 'all') {
@@ -233,24 +228,25 @@ export class FloatingButtonManager {
 		// 	return;
 		// }
 		
-	// Ctrl/Cmd + 클릭: 편집 모드로 split right에서 열기 (file, journal 타입)
-	if ((e.ctrlKey || e.metaKey) && (file.type === 'file' || file.type === 'journal')) {
+	// Ctrl/Cmd + 클릭: 편집 모드로 split right에서 열기 (file, journal, calendar 타입)
+	if ((e.ctrlKey || e.metaKey) && (file.type === 'file' || file.type === 'journal' || file.type === 'calendar')) {
 		const isAllButton = file.type === 'journal' && (file.granularity === 'all');
+		const isCalendarButton = file.type === 'calendar';
 		const isActive = button.hasClass('synaptic-action-button-active');
 		
 		console.log('[Cmd/Ctrl + 클릭] 버튼 ID:', file.id, '/ 타입:', file.type, '/ granularity:', file.granularity);
-		console.log('[Cmd/Ctrl + 클릭] isAllButton:', isAllButton, '/ isActive:', isActive);
+		console.log('[Cmd/Ctrl + 클릭] isAllButton:', isAllButton, '/ isCalendarButton:', isCalendarButton, '/ isActive:', isActive);
 		console.log('[Cmd/Ctrl + 클릭] currentFilePath:', this.currentFilePath);
 		console.log('[Cmd/Ctrl + 클릭] actualFilePath:', actualFilePath);
 		
-		// ALL 버튼인 경우
-		if (isAllButton) {
-			// ALL 버튼이 활성화되어 있고, currentFilePath가 있으면 편집 모드로 열기
+		// ALL 또는 Calendar 버튼인 경우
+		if (isAllButton || isCalendarButton) {
+			// 활성화되어 있고, currentFilePath가 있으면 편집 모드로 열기
 			if (isActive && this.currentFilePath) {
-				console.log('[Cmd/Ctrl + 클릭] ALL 버튼 - 편집 모드로 열기:', this.currentFilePath);
+				console.log('[Cmd/Ctrl + 클릭] ALL/Calendar 버튼 - 편집 모드로 열기:', this.currentFilePath);
 				this.openInEditMode(this.currentFilePath);
 			} else {
-				console.warn('[Cmd/Ctrl + 클릭] ALL 버튼 - 조건 불충족');
+				console.warn('[Cmd/Ctrl + 클릭] ALL/Calendar 버튼 - 조건 불충족');
 			}
 		} else {
 			// 일반 버튼인 경우 (Daily, Weekly, Yearly 등)
@@ -323,12 +319,12 @@ export class FloatingButtonManager {
 			const granularity = btn.getAttribute('data-granularity');
 			const isActive = btn.hasClass('synaptic-action-button-active');
 			
-			// ALL 버튼의 경우
-			if (fileType === 'journal' && granularity === 'all') {
-				// ALL 버튼이 활성화되어 있으면 편집 아이콘 표시 가능
+			// ALL 또는 Calendar 버튼의 경우
+			if ((fileType === 'journal' && granularity === 'all') || fileType === 'calendar') {
+				// 버튼이 활성화되어 있으면 편집 아이콘 표시 가능
 				if (isActive) {
 					if (this.isModifierKeyPressed && btn.matches(':hover')) {
-						console.log('[편집 모드] ALL 버튼 - 편집 아이콘 표시');
+						console.log('[편집 모드] ALL/Calendar 버튼 - 편집 아이콘 표시');
 						this.showEditIcon(btn as HTMLElement);
 					} else {
 						this.restoreOriginalIcon(btn as HTMLElement);

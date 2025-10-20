@@ -23,20 +23,31 @@ export class CalendarSubmenu {
 	private app: App;
 	private settings: SynapticViewSettings;
 	private onFileSelect: (quickAccessFile: QuickAccessFile) => void;
+	private onUpdateActiveButton: (filePath: string, activeButtonId?: string) => void;
 	private openedSubmenu: HTMLElement | null = null;
 	private currentDate: moment.Moment = moment();
 	private hideTimeout: number | null = null;
+	private calendarButtonFile: QuickAccessFile | null = null;
 
-	constructor(app: App, settings: SynapticViewSettings, onFileSelect: (quickAccessFile: QuickAccessFile) => void) {
+	constructor(
+		app: App,
+		settings: SynapticViewSettings,
+		onFileSelect: (quickAccessFile: QuickAccessFile) => void,
+		onUpdateActiveButton: (filePath: string, activeButtonId?: string) => void
+	) {
 		this.app = app;
 		this.settings = settings;
 		this.onFileSelect = onFileSelect;
+		this.onUpdateActiveButton = onUpdateActiveButton;
 	}
 
 	/**
 	 * Calendar 버튼에 서브메뉴 추가
 	 */
 	addCalendarSubmenu(button: HTMLElement, file: QuickAccessFile) {
+		// Calendar 버튼 파일 정보 저장 (활성화 상태 업데이트용)
+		this.calendarButtonFile = file;
+		
 		// 서브메뉴 컨테이너 생성
 		const submenu = button.createDiv({ cls: 'synaptic-calendar-submenu' });
 		
@@ -234,8 +245,19 @@ export class CalendarSubmenu {
 				file = await createDailyNote(date);
 			}
 			
-			if (file) {
-				await this.app.workspace.getLeaf().openFile(file);
+			if (file && this.calendarButtonFile) {
+				// 파일 경로 업데이트
+				const filePath = file.path;
+				this.onUpdateActiveButton(filePath, this.calendarButtonFile.id);
+				
+				// QuickAccessFile 형태로 변환하여 onFileSelect 호출
+				// type을 'file'로 전달하여 이미 생성된 파일을 직접 열도록 함
+				const tempFile: QuickAccessFile = {
+					...this.calendarButtonFile,
+					type: 'file',
+					filePath: filePath
+				};
+				this.onFileSelect(tempFile);
 			} else {
 				new Notice('📅 데일리 노트를 열 수 없습니다.');
 			}
@@ -257,8 +279,16 @@ export class CalendarSubmenu {
 				file = await createWeeklyNote(date);
 			}
 			
-			if (file) {
-				await this.app.workspace.getLeaf().openFile(file);
+			if (file && this.calendarButtonFile) {
+				const filePath = file.path;
+				this.onUpdateActiveButton(filePath, this.calendarButtonFile.id);
+				
+				const tempFile: QuickAccessFile = {
+					...this.calendarButtonFile,
+					type: 'file',
+					filePath: filePath
+				};
+				this.onFileSelect(tempFile);
 			} else {
 				new Notice('📅 주간 노트를 열 수 없습니다.');
 			}
@@ -280,8 +310,16 @@ export class CalendarSubmenu {
 				file = await createYearlyNote(date);
 			}
 			
-			if (file) {
-				await this.app.workspace.getLeaf().openFile(file);
+			if (file && this.calendarButtonFile) {
+				const filePath = file.path;
+				this.onUpdateActiveButton(filePath, this.calendarButtonFile.id);
+				
+				const tempFile: QuickAccessFile = {
+					...this.calendarButtonFile,
+					type: 'file',
+					filePath: filePath
+				};
+				this.onFileSelect(tempFile);
 			} else {
 				new Notice('📅 년간 노트를 열 수 없습니다.');
 			}
@@ -303,8 +341,16 @@ export class CalendarSubmenu {
 				file = await createMonthlyNote(date);
 			}
 			
-			if (file) {
-				await this.app.workspace.getLeaf().openFile(file);
+			if (file && this.calendarButtonFile) {
+				const filePath = file.path;
+				this.onUpdateActiveButton(filePath, this.calendarButtonFile.id);
+				
+				const tempFile: QuickAccessFile = {
+					...this.calendarButtonFile,
+					type: 'file',
+					filePath: filePath
+				};
+				this.onFileSelect(tempFile);
 			} else {
 				new Notice('📅 월간 노트를 열 수 없습니다.');
 			}
@@ -330,8 +376,16 @@ export class CalendarSubmenu {
 				file = await createQuarterlyNote(date);
 			}
 			
-			if (file) {
-				await this.app.workspace.getLeaf().openFile(file);
+			if (file && this.calendarButtonFile) {
+				const filePath = file.path;
+				this.onUpdateActiveButton(filePath, this.calendarButtonFile.id);
+				
+				const tempFile: QuickAccessFile = {
+					...this.calendarButtonFile,
+					type: 'file',
+					filePath: filePath
+				};
+				this.onFileSelect(tempFile);
 			} else {
 				new Notice('📅 분기 노트를 열 수 없습니다.');
 			}

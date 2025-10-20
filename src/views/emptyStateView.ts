@@ -37,14 +37,16 @@ export class EmptyStateViewManager {
 		for (const leaf of leaves) {
 			console.log('[customizeEmptyState] 빈 탭 처리 시작, leaf:', leaf);
 			
-			// 활성화된 파일이 있으면 실제로 파일을 열기
-			const enabledFiles = this.settings.quickAccessFiles.filter(f => f.enabled);
-			console.log('[customizeEmptyState] 활성화된 파일 개수:', enabledFiles.length);
-			
-			if (enabledFiles.length === 0) {
-				// 등록된 파일이 없을 때 안내 메시지 표시
-				const container = leaf.view.containerEl;
-				if (!container) continue;
+		// 활성화된 파일이 있으면 실제로 파일을 열기
+		const enabledFiles = this.settings.quickAccessFiles.filter(f => f.enabled);
+		console.log('[customizeEmptyState] 활성화된 파일 개수:', enabledFiles.length);
+		
+		// container 변수를 먼저 정의
+		const container = leaf.view.containerEl;
+		if (!container) continue;
+		
+		if (enabledFiles.length === 0) {
+			// 등록된 파일이 없을 때 안내 메시지 표시
 
 				const emptyState = container.querySelector('.empty-state');
 				if (!emptyState) continue;
@@ -53,49 +55,63 @@ export class EmptyStateViewManager {
 				emptyState.addClass('synaptic-empty-state');
 				this.showSetupMessage(emptyState as HTMLElement);
 				
-			// 플로팅 버튼 추가 (기본 버튼 + 설정 버튼)
-			const existingButtons = container.querySelector('.synaptic-action-buttons');
-			if (existingButtons) {
-				existingButtons.remove();
-			}
-			
-			// 이전 FloatingButtonManager의 currentActiveButtonId 저장
-			const previousActiveButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
-			
-			this.floatingButtonManager = new FloatingButtonManager(
-				this.app,
-				this.settings,
-				(qaf) => this.loadFile(leaf, qaf),
-				null,
-				previousActiveButtonId  // 이전 활성 버튼 ID 전달
-			);
+		// 플로팅 버튼 추가 (기본 버튼 + 설정 버튼)
+		const existingButtons = container.querySelector('.synaptic-action-buttons');
+		if (existingButtons) {
+			existingButtons.remove();
+		}
+		
+		// 새 탭을 열 때는 이전 활성 상태를 기억하지 않음
+		this.floatingButtonManager = new FloatingButtonManager(
+			this.app,
+			this.settings,
+			(qaf) => this.loadFile(leaf, qaf),
+			null,
+			null  // 새 탭이므로 활성 버튼 없음
+		);
 			this.floatingButtonManager.addFloatingButton(container);
 			continue;
 			}
 			
 		// enabledFiles.length > 0 인 경우
-		// 새 탭(빈 탭)을 열 때는 항상 첫 번째 우선순위 파일/웹 로드
-		const quickAccessFileToLoad = enabledFiles[0];
-		console.log('[customizeEmptyState] 로드할 항목:', quickAccessFileToLoad);
+		// 새 탭(빈 탭)을 열 때는 Calendar와 'all' granularity를 제외한 첫 번째 항목 로드
+		const quickAccessFileToLoad = enabledFiles.find(file => {
+			// Calendar 타입은 자동 로드 제외 (사용자가 직접 선택해야 함)
+			if (file.type === 'calendar') return false;
+			// 'all' granularity는 자동 로드 제외 (서브메뉴로만 선택 가능)
+			if (file.type === 'journal' && file.granularity === 'all') return false;
+			return true;
+		});
 		
-		// Type에 따라 다르게 처리
-		if (quickAccessFileToLoad.type === 'calendar') {
-			// Calendar 타입은 아직 기능 없음
-			console.log('[customizeEmptyState] Calendar 타입은 아직 구현되지 않았습니다');
+		// 로드 가능한 항목이 없으면 버튼만 표시
+		if (!quickAccessFileToLoad) {
+			console.log('[customizeEmptyState] 자동 로드 가능한 항목이 없습니다 - 버튼만 표시');
+			
+			// FloatingButtonManager 생성 (버튼만 표시)
+			const existingButtons = container.querySelector('.synaptic-action-buttons');
+			if (existingButtons) {
+				existingButtons.remove();
+			}
+			
+			// 새 탭이므로 활성 버튼 없음
+			this.floatingButtonManager = new FloatingButtonManager(
+				this.app,
+				this.settings,
+				(qaf) => this.loadFile(leaf, qaf),
+				null,
+				null
+			);
+			this.floatingButtonManager.addFloatingButton(container);
 			continue;
 		}
+		
+		console.log('[customizeEmptyState] 로드할 항목:', quickAccessFileToLoad);
 		
 		if (quickAccessFileToLoad.type === 'file' || quickAccessFileToLoad.type === 'journal') {
 		// Journal Note 타입이면 granularity에 따라 경로를 동적으로 계산
 		let filePathToLoad = quickAccessFileToLoad.filePath;
 		if (quickAccessFileToLoad.type === 'journal') {
 			const granularity = quickAccessFileToLoad.granularity || 'day';
-			
-			// 'all'은 아직 구현 안 됨 - 건너뛰기
-			if (granularity === 'all') {
-				console.log('[customizeEmptyState] All granularity는 아직 구현되지 않았습니다');
-				continue;
-			}
 			
 			filePathToLoad = getJournalNotePath(granularity);
 			console.log(`[customizeEmptyState] ${granularity} Journal Note 경로:`, filePathToLoad);
@@ -146,27 +162,25 @@ export class EmptyStateViewManager {
 						
 						// .view-content 찾기
 						const viewContent = container.querySelector('.view-content');
-						if (viewContent) {
-							const existingButtons = viewContent.querySelector('.synaptic-action-buttons');
-							if (existingButtons) {
-								existingButtons.remove();
-							}
-							
-							// 이전 FloatingButtonManager의 currentActiveButtonId 저장
-							const previousActiveButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
-							
-							this.floatingButtonManager = new FloatingButtonManager(
-								this.app,
-								this.settings,
-								(qaf) => this.loadFile(leaf, qaf),
-								this.currentFilePath,
-								previousActiveButtonId  // 이전 활성 버튼 ID 전달
-							);
-							this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
+					if (viewContent) {
+						const existingButtons = viewContent.querySelector('.synaptic-action-buttons');
+						if (existingButtons) {
+							existingButtons.remove();
 						}
+						
+						// 파일 로드 후 FloatingButtonManager 생성
+						this.floatingButtonManager = new FloatingButtonManager(
+							this.app,
+							this.settings,
+							(qaf) => this.loadFile(leaf, qaf),
+							this.currentFilePath,
+							quickAccessFileToLoad.id  // 현재 로드된 파일의 ID로 활성화
+						);
+						this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
 					}
 				}
-		} else if (quickAccessFileToLoad.type === 'web') {
+			}
+	} else if (quickAccessFileToLoad.type === 'web') {
 			// Web 타입: 현재 탭에서 URL 열기
 			console.log('[customizeEmptyState] Web 타입 - URL 열기:', quickAccessFileToLoad.filePath);
 			this.currentFilePath = quickAccessFileToLoad.filePath;
@@ -193,30 +207,28 @@ export class EmptyStateViewManager {
 					// .view-content 찾기
 					const viewContent = container.querySelector('.view-content');
 					if (viewContent) {
-						const existingButtons = viewContent.querySelector('.synaptic-action-buttons');
-						if (existingButtons) {
-							existingButtons.remove();
-						}
-						
-						// 이전 FloatingButtonManager의 currentActiveButtonId 저장
-						const previousActiveButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
-						
-						this.floatingButtonManager = new FloatingButtonManager(
-							this.app,
-							this.settings,
-							(qaf) => this.loadFile(leaf, qaf),
-							this.currentFilePath,
-							previousActiveButtonId  // 이전 활성 버튼 ID 전달
-						);
-						this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
+					const existingButtons = viewContent.querySelector('.synaptic-action-buttons');
+					if (existingButtons) {
+						existingButtons.remove();
 					}
+					
+					// Web 타입 로드 후 FloatingButtonManager 생성
+					this.floatingButtonManager = new FloatingButtonManager(
+						this.app,
+						this.settings,
+						(qaf) => this.loadFile(leaf, qaf),
+						this.currentFilePath,
+						quickAccessFileToLoad.id  // 현재 로드된 Web의 ID로 활성화
+					);
+					this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
 				}
-			}, 100);
-		}
-		}
+			}
+		}, 100);
 	}
+	}
+}
 
-	private showSetupMessage(container: HTMLElement) {
+private showSetupMessage(container: HTMLElement) {
 		container.empty();
 		const contentDiv = container.createDiv({ cls: 'synaptic-setup-message' });
 		
@@ -514,23 +526,23 @@ export class EmptyStateViewManager {
 		// .view-content 내부에 버튼 추가
 		const viewContent = container.querySelector('.view-content');
 		if (viewContent) {
-			// 기존 버튼 제거
-			const existingButtons = viewContent.querySelector('.synaptic-action-buttons');
-			if (existingButtons) {
-				existingButtons.remove();
-			}
-			
-			// 이전 FloatingButtonManager의 currentActiveButtonId 저장
-			const previousActiveButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
-			
-			// 새 버튼 추가
-			this.floatingButtonManager = new FloatingButtonManager(
-				this.app,
-				this.settings,
-				(qaf) => this.loadFile(leaf, qaf),
-				filePath,
-				previousActiveButtonId  // 이전 활성 버튼 ID 전달
-			);
+		// 기존 버튼 제거
+		const existingButtons = viewContent.querySelector('.synaptic-action-buttons');
+		if (existingButtons) {
+			existingButtons.remove();
+		}
+		
+		// updateFloatingButtons: 이미 열려있는 파일에 버튼 추가
+		// 이전 FloatingButtonManager의 currentActiveButtonId 보존 (Journal all, Calendar 등에서 설정한 활성 상태 유지)
+		const previousActiveButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
+		
+		this.floatingButtonManager = new FloatingButtonManager(
+			this.app,
+			this.settings,
+			(qaf) => this.loadFile(leaf, qaf),
+			filePath,
+			previousActiveButtonId  // 이전 활성 버튼 ID 유지
+		);
 			this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
 		}
 		}
