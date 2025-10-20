@@ -2,6 +2,7 @@ import { Plugin } from 'obsidian';
 import { SynapticViewSettings, DEFAULT_SETTINGS } from './src/settings';
 import { SynapticViewSettingTab } from './src/settingsTab';
 import { EmptyStateViewManager } from './src/views/emptyStateView';
+import { registerCommands } from './src/commands';
 
 export default class SynapticViewPlugin extends Plugin {
 	settings: SynapticViewSettings;
@@ -17,6 +18,9 @@ export default class SynapticViewPlugin extends Plugin {
 
 		// 설정 탭 등록
 		this.addSettingTab(new SynapticViewSettingTab(this.app, this));
+
+		// 커맨드 등록
+		registerCommands(this);
 
 		// 레이아웃이 준비된 후 실행
 		this.app.workspace.onLayoutReady(() => {
