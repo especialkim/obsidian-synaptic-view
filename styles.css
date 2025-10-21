@@ -535,12 +535,6 @@
 	box-shadow: 0 0 0 1px var(--text-on-accent);
 }
 
-/* Add new item button - remove top border */
-.setting-item:has(button[aria-label="Add new item"]),
-.setting-item:has(button[aria-label="새 항목 추가"]) {
-	border-top: none !important;
-}
-
 /* Smooth toggle animation */
 .setting-item-control .checkbox-container input[type="checkbox"] {
 	transition: all 0.2s ease;
@@ -777,7 +771,8 @@
 .synaptic-view-settings .dropdown,
 .synaptic-view-settings .checkbox-container,
 .synaptic-view-settings .clickable-icon,
-.synaptic-view-settings .suggestion-item {
+.synaptic-view-settings .suggestion-item,
+.synaptic-view-settings option:not(:disabled) {
 	cursor: pointer !important;
 }
 
@@ -795,6 +790,16 @@
 .synaptic-view-settings input:disabled,
 .synaptic-view-settings textarea:disabled {
 	cursor: not-allowed !important;
+}
+
+.synaptic-view-settings .setting-item {
+	padding: 0.5rem 0 0 0 !important;
+	border-top: none !important;
+}
+
+.synaptic-view-settings h3 {
+	margin-block-start: calc(var(--p-spacing)* 2);
+	margin-block-end: calc(var(--p-spacing) / 2);
 }
 
 /* Action Buttons (Floating buttons in view) */

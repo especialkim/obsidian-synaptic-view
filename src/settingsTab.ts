@@ -38,7 +38,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		containerEl.addClass('synaptic-view-settings');
 
 		// === Synaptic View Settings ===
-		containerEl.createEl('h2', { text: translations.settings.title });
+		containerEl.createEl('h3', { text: translations.settings.title });
 		
 		// Replace New Tab toggle
 		new Setting(containerEl)
@@ -55,7 +55,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		// (Default view selection moved below Quick Access items per new structure)
 
 		// === Quick Access Items ===
-		containerEl.createEl('h2', { text: translations.settings.quickAccessItems });
+		containerEl.createEl('h3', { text: translations.settings.quickAccessItems });
 		
 		// Item list
 		this.renderQuickAccessFiles(containerEl);
@@ -73,7 +73,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		// Default view selection (moved here)
 		const enabledFilesForDefault = this.plugin.settings.quickAccessFiles.filter(f => f.enabled);
 		if (enabledFilesForDefault.length > 0) {
-			containerEl.createEl('h2', { text: translations.settings.defaultView.title });
+			containerEl.createEl('h3', { text: translations.settings.defaultView.title });
 			new Setting(containerEl)
 				.setName(translations.settings.defaultView.name)
 				.setDesc(translations.settings.defaultView.desc)
@@ -189,12 +189,11 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 	private renderViewStyleSettings(containerEl: HTMLElement) {
 		const translations = t();
 		
-		containerEl.createEl('h2', { text: translations.settings.viewStyle.title });
+		containerEl.createEl('h3', { text: translations.settings.viewStyle.title });
 		
 		// Notice
 		const noticeEl = containerEl.createDiv({ cls: 'setting-item-description' });
 		noticeEl.setText(translations.settings.viewStyle.notice);
-		noticeEl.style.marginBottom = '1rem';
 		noticeEl.style.color = 'var(--text-muted)';
 		noticeEl.style.fontStyle = 'italic';
 

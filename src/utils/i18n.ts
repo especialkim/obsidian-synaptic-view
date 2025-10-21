@@ -101,10 +101,10 @@ const ko: Translations = {
 			name: '새 탭을 Synaptic View로 대체',
 			desc: '활성화하면 새 탭 버튼 클릭 시 기본 빈 상태 대신 Synaptic View가 열립니다.'
 		},
-		quickAccessItems: '빠른 접근 항목',
-		addNewItem: 'Add new item',
+		quickAccessItems: '빠른 접근 도구',
+		addNewItem: '항목 추가',
 		defaultView: {
-			title: '기본 보기',
+			title: '시작 화면 설정',
 			name: '기본으로 열 항목',
 			desc: 'Synaptic View에서 기본으로 열릴 빠른 접근 항목을 선택하세요.'
 		},
@@ -122,9 +122,9 @@ const ko: Translations = {
 		},
 		fileType: {
 			file: '파일',
-			web: '웹',
-			journal: '저널',
-			calendar: '캘린더'
+			web: '웹페이지',
+			journal: '주기 노트',
+			calendar: '캘린더 뷰'
 		},
 		granularity: {
 			all: '전체',
@@ -135,15 +135,15 @@ const ko: Translations = {
 			year: '연간'
 		},
 		journal: {
-			all: '저널 (전체)',
-			daily: '저널 (일간)',
-			weekly: '저널 (주간)',
-			monthly: '저널 (월간)',
-			quarterly: '저널 (분기)',
-			yearly: '저널 (연간)'
+			all: '주기 노트 (전체)',
+			daily: '주기 노트 (일간)',
+			weekly: '주기 노트 (주간)',
+			monthly: '주기 노트 (월간)',
+			quarterly: '주기 노트 (분기)',
+			yearly: '주기 노트 (연간)'
 		},
 		badges: {
-			journal: 'J',
+			journal: '주기',
 			day: '일',
 			week: '주',
 			month: '월',
@@ -189,10 +189,10 @@ const en: Translations = {
 			name: 'Replace New Tab with Synaptic View',
 			desc: 'When enabled, clicking the New Tab button opens Synaptic View instead of the default empty state.'
 		},
-		quickAccessItems: 'Quick Access Items',
-		addNewItem: 'Add new item',
+		quickAccessItems: 'Quick Access Tools',
+		addNewItem: 'Add item',
 		defaultView: {
-			title: 'Default View',
+			title: 'Startup Screen Settings',
 			name: 'Default item to open',
 			desc: 'Choose which Quick Access item opens by default in Synaptic View.'
 		},
@@ -210,9 +210,9 @@ const en: Translations = {
 		},
 		fileType: {
 			file: 'File',
-			web: 'Web',
+			web: 'Web Page',
 			journal: 'Journal',
-			calendar: 'Calendar'
+			calendar: 'Calendar View'
 		},
 		granularity: {
 			all: 'All',
