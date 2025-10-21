@@ -179,6 +179,40 @@
 	display: block;
 }
 
+/* Task Badge - 버튼 우측 상단에 task 상태 배지 표시 */
+.synaptic-task-badge {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	font-size: 0.65em;
+	font-weight: 700;
+	line-height: 1;
+	padding: 3px 5px;
+	border-radius: 50%;
+	pointer-events: none;
+	z-index: 3;
+	min-width: 18px;
+	min-height: 18px;
+	text-align: center;
+	box-shadow: 0 0 0 2px var(--background-primary);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Task 완료 시 초록색 배지 (체크 표시) */
+.synaptic-task-badge-completed {
+	background-color: #10b981;
+	color: white;
+	font-size: 0.7em;
+}
+
+/* Task 미완료 시 빨간색 배지 (숫자 표시) */
+.synaptic-task-badge-incomplete {
+	background-color: #ef4444;
+	color: white;
+}
+
 /* 설정 버튼에는 배지 절대 표시 안 함 */
 .synaptic-settings-button .synaptic-journal-badge {
 	display: none !important;

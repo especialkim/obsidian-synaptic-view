@@ -288,4 +288,45 @@ export async function createTodayDailyNote(): Promise<TFile | null> {
 	return createJournalNote('day');
 }
 
+/**
+ * Daily Note의 task 상태를 카운팅합니다.
+ * @param app - Obsidian App 인스턴스
+ * @returns { incomplete, completed } 미완료/완료 task 개수, Daily Notes 없으면 null
+ */
+export async function getDailyNoteTaskCount(app: App): Promise<{ incomplete: number; completed: number } | null> {
+	// Daily Notes가 활성화되어 있는지 확인
+	if (!appHasDailyNotesPluginLoaded()) {
+		return null;
+	}
+	
+	try {
+		// 오늘의 Daily Note 경로 가져오기
+		const todayPath = getJournalNotePath('day');
+		const file = app.vault.getAbstractFileByPath(todayPath);
+		
+		// 파일이 없으면 null 반환
+		if (!(file instanceof TFile)) {
+			return null;
+		}
+		
+		// 파일 내용 읽기
+		const content = await app.vault.read(file);
+		
+		// 미완료 task 카운팅 (- [ ])
+		const incompleteTasks = (content.match(/^- \[ \]/gm) || []).length;
+		
+		// 완료된 task 카운팅 (- [x] 또는 - [X])
+		const completedTasks = (content.match(/^- \[x\]/gmi) || []).length;
+		
+		return {
+			incomplete: incompleteTasks,
+			completed: completedTasks
+		};
+		
+	} catch (error) {
+		console.error('[Synaptic View] Daily Note task 카운팅 실패:', error);
+		return null;
+	}
+}
+
 

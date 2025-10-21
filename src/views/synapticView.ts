@@ -67,7 +67,7 @@ export class SynapticView {
 	/**
 	 * 플로팅 버튼만 추가 (파일 로드 없이)
 	 */
-	private addFloatingButtonsOnly(leaf: WorkspaceLeaf) {
+	private async addFloatingButtonsOnly(leaf: WorkspaceLeaf) {
 		const container = leaf.view.containerEl;
 		if (!container) return;
 		
@@ -90,7 +90,7 @@ export class SynapticView {
 			preservedFilePath,
 			preservedActiveButtonId
 		);
-		this.floatingButtonManager.addFloatingButton(targetContainer as HTMLElement);
+		await this.floatingButtonManager.addFloatingButton(targetContainer as HTMLElement);
 	}
 
 	/**
@@ -263,7 +263,7 @@ export class SynapticView {
 	 * @param filePath - 현재 열린 파일 경로
 	 * @param activeButtonId - 활성화할 버튼 ID (초기 로드 시)
 	 */
-	private addContainerUI(leaf: WorkspaceLeaf, filePath: string, activeButtonId: string | null = null) {
+	private async addContainerUI(leaf: WorkspaceLeaf, filePath: string, activeButtonId: string | null = null) {
 		const container = leaf.view.containerEl;
 		if (container) {
 			this.applySynapticViewClasses(container);
@@ -290,7 +290,7 @@ export class SynapticView {
 					actualFilePath,
 					previousActiveButtonId
 				);
-				this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
+				await this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
 			}
 		}
 	}

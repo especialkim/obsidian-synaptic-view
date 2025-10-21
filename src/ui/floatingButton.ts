@@ -3,7 +3,7 @@ import { createNewFile } from '../actions/createFileAction';
 import { navigateToFile } from '../actions/navigateFileAction';
 import { SynapticViewSettings, QuickAccessFile, JournalGranularity } from '../settings';
 import { openPluginSettings } from '../utils/openSettings';
-import { getJournalNotePath } from '../utils/pluginChecker';
+import { getJournalNotePath, getDailyNoteTaskCount, isJournalAvailable } from '../utils/pluginChecker';
 import { CalendarSubmenu } from './calendarSubmenu';
 import { JournalSubmenu } from './journalSubmenu';
 import { t } from '../utils/i18n';
@@ -36,7 +36,7 @@ export class FloatingButtonManager {
 		this.journalSubmenu = new JournalSubmenu(app, settings, onFileSelect, (filePath: string, activeButtonId?: string) => this.updateActiveButton(filePath, activeButtonId));
 	}
 
-	addFloatingButton(container: HTMLElement) {
+	async addFloatingButton(container: HTMLElement) {
 		// 버튼 컨테이너를 상단 오른쪽에 배치
 		this.buttonContainer = container.createDiv({ cls: 'synaptic-action-buttons' });
 		
@@ -54,6 +54,9 @@ export class FloatingButtonManager {
 	
 	// 외부 클릭 시 서브메뉴 닫기
 	this.setupOutsideClickListener();
+	
+	// Daily Note task 배지 업데이트
+	await this.updateDailyNoteTaskBadges();
 }
 
 	private addDefaultButtons(container: HTMLElement) {
@@ -359,6 +362,12 @@ export class FloatingButtonManager {
 		) as HTMLElement[];
 		submenus.forEach(submenu => submenu.detach());
 		
+		// Task 배지 임시 저장 (삭제 방지)
+		const taskBadge = button.querySelector('.synaptic-task-badge') as HTMLElement;
+		if (taskBadge) {
+			taskBadge.detach();
+		}
+		
 		button.empty();
 		setIcon(button, originalIcon);
 		setTooltip(button, originalTooltip, { delay: 100 });
@@ -368,6 +377,11 @@ export class FloatingButtonManager {
 		if (badgeText) {
 			const badge = button.createDiv({ cls: 'synaptic-journal-badge' });
 			badge.textContent = badgeText;
+		}
+		
+		// Task 배지 복원
+		if (taskBadge) {
+			button.appendChild(taskBadge);
 		}
 		
 		// 서브메뉴 복원
@@ -436,6 +450,84 @@ export class FloatingButtonManager {
 	setCurrentFile(filePath: string | null) {
 		if (filePath) {
 			this.updateActiveButton(filePath);
+		}
+	}
+
+	/**
+	 * Daily Note task 배지를 업데이트합니다.
+	 * 우선순위: Journal Daily > Journal All > Calendar (하나만 표시)
+	 */
+	private async updateDailyNoteTaskBadges() {
+		// Daily Notes가 활성화되어 있지 않으면 배지를 표시하지 않음
+		if (!isJournalAvailable()) {
+			return;
+		}
+
+		// Daily Note task 개수 가져오기
+		const taskCount = await getDailyNoteTaskCount(this.app);
+		
+		// Daily Note가 없거나 task 카운팅 실패 시 배지를 표시하지 않음
+		if (!taskCount) {
+			return;
+		}
+
+		const { incomplete, completed } = taskCount;
+		const totalTasks = incomplete + completed;
+
+		// buttonContainer가 없으면 종료
+		if (!this.buttonContainer) return;
+
+		// 우선순위에 따라 하나의 버튼만 선택
+		let selectedButton: HTMLElement | null = null;
+		
+		// 1순위: Journal Daily
+		selectedButton = this.buttonContainer.querySelector('.synaptic-action-button[data-file-type="journal"][data-granularity="day"]') as HTMLElement;
+		
+		// 2순위: Journal All (Daily가 없을 때만)
+		if (!selectedButton) {
+			selectedButton = this.buttonContainer.querySelector('.synaptic-action-button[data-file-type="journal"][data-granularity="all"]') as HTMLElement;
+		}
+		
+		// 3순위: Calendar (Journal이 없을 때만)
+		if (!selectedButton) {
+			selectedButton = this.buttonContainer.querySelector('.synaptic-action-button[data-file-type="calendar"]') as HTMLElement;
+		}
+
+		// 선택된 버튼이 있으면 task 배지 추가
+		if (selectedButton) {
+			this.addTaskBadge(selectedButton, incomplete, totalTasks);
+		}
+	}
+
+	/**
+	 * 버튼에 task 배지를 추가합니다.
+	 * @param button - 배지를 추가할 버튼 엘리먼트
+	 * @param incomplete - 미완료 task 개수
+	 * @param totalTasks - 전체 task 개수
+	 */
+	private addTaskBadge(button: HTMLElement, incomplete: number, totalTasks: number) {
+		// 기존 task 배지 제거 (중복 방지)
+		const existingBadge = button.querySelector('.synaptic-task-badge');
+		if (existingBadge) {
+			existingBadge.remove();
+		}
+
+		// task가 하나도 없으면 배지를 표시하지 않음
+		if (totalTasks === 0) {
+			return;
+		}
+
+		// task 배지 생성
+		const badge = button.createDiv({ cls: 'synaptic-task-badge' });
+
+		// 모든 task가 완료되었으면 초록색 점
+		if (incomplete === 0) {
+			badge.addClass('synaptic-task-badge-completed');
+			badge.textContent = '✓';
+		} else {
+			// 미완료 task가 있으면 빨간색 배지에 개수 표시
+			badge.addClass('synaptic-task-badge-incomplete');
+			badge.textContent = incomplete.toString();
 		}
 	}
 }
