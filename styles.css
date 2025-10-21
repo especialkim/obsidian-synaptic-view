@@ -536,15 +536,57 @@
 	box-shadow: 0 0 0 1px var(--text-on-accent);
 }
 
-/* Quick Access Files 설정 스타일 - 한 줄 레이아웃 */
-.synaptic-quick-access-files {
-	margin-top: 0.5rem;
+/* Add new item button - remove top border */
+.setting-item:has(button[aria-label="Add new item"]) {
+	border-top: none !important;
+}
+
+/* Cursor styles for interactive elements */
+.synaptic-action-button,
+.synaptic-calendar-nav-btn,
+.synaptic-calendar-year,
+.synaptic-calendar-month,
+.synaptic-calendar-quarter-btn,
+.synaptic-calendar-week-number,
+.synaptic-calendar-day,
+.synaptic-journal-submenu-item,
+.synaptic-icon-button,
+button[aria-label="Add new item"],
+.setting-item-control button,
+.setting-item-control .dropdown,
+.setting-item-control select {
+	cursor: pointer !important;
+}
+
+/* Text input cursor */
+.setting-item-control input[type="text"]:not(:disabled) {
+	cursor: text !important;
+}
+
+/* Disabled inputs */
+.setting-item-control input[type="text"]:disabled {
+	cursor: not-allowed !important;
+}
+
+/* Toggle switches */
+.setting-item-control .checkbox-container {
+	cursor: pointer !important;
+}
+
+/* Smooth toggle animation */
+.setting-item-control .checkbox-container input[type="checkbox"] {
+	transition: all 0.2s ease !important;
+}
+
+.setting-item-control .checkbox-container::after {
+	transition: transform 0.2s ease, background-color 0.2s ease !important;
 }
 
 .synaptic-file-item-inline {
 	margin: 0 !important;
-	padding: 0.5rem 0 !important;
+	padding: 0.5rem 0 0 0!important;
 	border-bottom: none !important;
+	border-top: none !important;
 	background-color: transparent !important;
 }
 
@@ -586,11 +628,19 @@
 	flex-shrink: 0;
 }
 
-/* 위/아래 버튼도 고정 너비 */
+/* Up/Down/Delete buttons - larger size for better usability */
 .synaptic-file-item-inline .setting-item-control button:not(.synaptic-icon-button) {
-	width: 32px !important;
-	height: 32px !important;
+	width: 36px !important;
+	height: 36px !important;
 	flex-shrink: 0;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+}
+
+.synaptic-file-item-inline .setting-item-control button:not(.synaptic-icon-button) svg {
+	width: 18px !important;
+	height: 18px !important;
 }
 
 /* 아이콘 선택 모달 */

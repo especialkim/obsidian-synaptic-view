@@ -48,6 +48,12 @@ export class CalendarSubmenu {
 		// Calendar 버튼 파일 정보 저장 (활성화 상태 업데이트용)
 		this.calendarButtonFile = file;
 		
+		// 기존 서브메뉴가 있으면 제거 (중복 방지)
+		const existingSubmenu = button.querySelector('.synaptic-calendar-submenu');
+		if (existingSubmenu) {
+			existingSubmenu.remove();
+		}
+		
 		// 서브메뉴 컨테이너 생성
 		const submenu = button.createDiv({ cls: 'synaptic-calendar-submenu' });
 		
@@ -90,8 +96,11 @@ export class CalendarSubmenu {
 		const prevMonthBtn = header.createDiv({ cls: 'synaptic-calendar-nav-btn' });
 		setIcon(prevMonthBtn, 'chevron-left');
 		prevMonthBtn.title = '이전 월';
-		prevMonthBtn.addEventListener('click', () => {
+		prevMonthBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			console.log('[Calendar] 이전 월 클릭 - 현재:', this.currentDate.format('YYYY-MM'));
 			this.currentDate.subtract(1, 'month');
+			console.log('[Calendar] 이전 월 클릭 - 변경 후:', this.currentDate.format('YYYY-MM'));
 			this.renderCalendar(container);
 		});
 		
@@ -123,8 +132,11 @@ export class CalendarSubmenu {
 		const nextMonthBtn = header.createDiv({ cls: 'synaptic-calendar-nav-btn' });
 		setIcon(nextMonthBtn, 'chevron-right');
 		nextMonthBtn.title = '다음 월';
-		nextMonthBtn.addEventListener('click', () => {
+		nextMonthBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			console.log('[Calendar] 다음 월 클릭 - 현재:', this.currentDate.format('YYYY-MM'));
 			this.currentDate.add(1, 'month');
+			console.log('[Calendar] 다음 월 클릭 - 변경 후:', this.currentDate.format('YYYY-MM'));
 			this.renderCalendar(container);
 		});
 		

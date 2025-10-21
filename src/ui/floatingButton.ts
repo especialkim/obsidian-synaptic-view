@@ -39,15 +39,13 @@ export class FloatingButtonManager {
 		// 버튼 컨테이너를 상단 오른쪽에 배치
 		this.buttonContainer = container.createDiv({ cls: 'synaptic-action-buttons' });
 		
-		// 기본 버튼들
+		// Default buttons
 		this.addDefaultButtons(this.buttonContainer);
 
-		// Quick Access 버튼들 (활성화된 경우)
-		if (this.settings.enableQuickAccess) {
-			this.addQuickAccessButtons(this.buttonContainer);
-		}
+		// Quick Access buttons
+		this.addQuickAccessButtons(this.buttonContainer);
 
-	// 설정 버튼 (항상 마지막에 표시)
+	// Settings button (always shown last)
 	this.addSettingsButton(this.buttonContainer);
 
 	// 키보드 이벤트 리스너 추가

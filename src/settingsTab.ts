@@ -34,55 +34,125 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		// New Tab View 변경 섹션
-		containerEl.createEl('h2', { text: 'New Tab View 변경' });
+		// === Synaptic View Settings ===
+		containerEl.createEl('h2', { text: 'Synaptic View' });
 		
-		// 전체 기능 ON/OFF 토글
+		// Replace New Tab toggle
 		new Setting(containerEl)
-			.setName('Quick Access 활성화')
-			.setDesc('여러 파일을 등록하고 New Tab 화면에서 버튼으로 빠르게 접근하세요.')
+			.setName('Replace New Tab with Synaptic View')
+			.setDesc('When enabled, clicking the New Tab button opens Synaptic View instead of the default empty state.')
 			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.enableQuickAccess)
+				.setValue(this.plugin.settings.replaceNewTabWithSynapticView)
 				.onChange(async (value) => {
-					this.plugin.settings.enableQuickAccess = value;
+					this.plugin.settings.replaceNewTabWithSynapticView = value;
 					await this.plugin.saveSettings();
-					this.display();
 					this.plugin.customizeEmptyState();
 				}));
 
-		// ON일 때만 파일 리스트 표시
-		if (this.plugin.settings.enableQuickAccess) {
-			// 파일 리스트 렌더링
-			this.renderQuickAccessFiles(containerEl);
+		// (Default view selection moved below Quick Access items per new structure)
 
-			// [+ 추가] 버튼
+		// === Quick Access Items ===
+		containerEl.createEl('h2', { text: 'Quick Access Items' });
+		
+		// Item list
+		this.renderQuickAccessFiles(containerEl);
+
+		// Add button (simple "+")
+		new Setting(containerEl)
+			.addButton(button => button
+				.setButtonText('+')
+				.setTooltip('Add new item')
+				.setCta()
+				.onClick(async () => {
+					this.addQuickAccessFile();
+				}));
+
+		// Default view selection (moved here)
+		const enabledFilesForDefault = this.plugin.settings.quickAccessFiles.filter(f => f.enabled);
+		if (enabledFilesForDefault.length > 0) {
+			containerEl.createEl('h2', { text: 'Default View' });
 			new Setting(containerEl)
-				.addButton(button => button
-					.setButtonText('+ 파일 추가')
-					.setCta()
-					.onClick(async () => {
-						this.addQuickAccessFile();
-					}));
+				.setName('Default item to open')
+				.setDesc('Choose which Quick Access item opens by default in Synaptic View.')
+				.addDropdown(dropdown => {
+					this.updateDefaultViewDropdown(dropdown, enabledFilesForDefault);
+					
+					dropdown
+						.setValue(this.plugin.settings.defaultViewIndex.toString())
+						.onChange(async (value) => {
+							this.plugin.settings.defaultViewIndex = parseInt(value);
+							await this.plugin.saveSettings();
+						});
+				});
+		}
 
-			// 스타일 설정 섹션
-			this.renderViewStyleSettings(containerEl);
+		// === View Style Settings ===
+		this.renderViewStyleSettings(containerEl);
+	}
+	
+	/**
+	 * Update Default view dropdown options
+	 */
+	private updateDefaultViewDropdown(dropdown: any, enabledFiles: QuickAccessFile[]) {
+		// Clear existing options
+		dropdown.selectEl.empty();
+		
+		// Add new options
+		enabledFiles.forEach((file, index) => {
+			const label = this.getFileLabel(file, index + 1);
+			dropdown.addOption((index + 1).toString(), label);
+		});
+		
+		// Ensure current value is valid
+		const currentValue = this.plugin.settings.defaultViewIndex.toString();
+		if (enabledFiles.length > 0 && enabledFiles[this.plugin.settings.defaultViewIndex - 1]) {
+			dropdown.setValue(currentValue);
+		} else if (enabledFiles.length > 0) {
+			// If current index is invalid, set to first item
+			this.plugin.settings.defaultViewIndex = 1;
+			dropdown.setValue('1');
+		}
+	}
+
+	/**
+	 * Get label for Quick Access file
+	 */
+	private getFileLabel(file: QuickAccessFile, index: number): string {
+		if (file.type === 'journal' && file.granularity) {
+			const granularityLabels: Record<JournalGranularity, string> = {
+				'all': 'Journal (All)',
+				'day': 'Journal (Daily)',
+				'week': 'Journal (Weekly)',
+				'month': 'Journal (Monthly)',
+				'quarter': 'Journal (Quarterly)',
+				'year': 'Journal (Yearly)'
+			};
+			return `${index}. ${granularityLabels[file.granularity]}`;
+		} else if (file.type === 'calendar') {
+			return `${index}. Calendar`;
+		} else if (file.type === 'web') {
+			const url = 'Web: ' + file.filePath || 'No URL';
+			return `${index}. ${url}`;
+		} else {
+			const fileName = 'File: ' + file.filePath.split('/').pop() || file.filePath;
+			return `${index}. ${fileName}`;
 		}
 	}
 
 	private renderViewStyleSettings(containerEl: HTMLElement) {
-		containerEl.createEl('h2', { text: 'View 스타일 설정' });
+		containerEl.createEl('h2', { text: 'View Style' });
 		
-		// 안내 문구
+		// Notice
 		const noticeEl = containerEl.createDiv({ cls: 'setting-item-description' });
-		noticeEl.setText('⚠️ 아래 설정은 미리보기(Preview) 모드에서만 적용됩니다.');
+		noticeEl.setText('⚠️ These settings apply only in Preview mode.');
 		noticeEl.style.marginBottom = '1rem';
 		noticeEl.style.color = 'var(--text-muted)';
 		noticeEl.style.fontStyle = 'italic';
 
-		// 인라인 타이틀 숨김 옵션
+		// Hide inline title option
 		new Setting(containerEl)
-			.setName('인라인 타이틀 숨김')
-			.setDesc('문서 상단의 인라인 타이틀을 숨깁니다. (대시보드 스타일에 적합)')
+			.setName('Hide inline title')
+			.setDesc('Hide the inline title at the top of the document (suitable for dashboard-style views).')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.hideInlineTitle)
 				.onChange(async (value) => {
@@ -91,10 +161,10 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 					this.plugin.customizeEmptyState();
 				}));
 
-		// Embedded Mentions 숨김 옵션
+		// Hide embedded mentions option
 		new Setting(containerEl)
-			.setName('Embedded Mentions 숨김')
-			.setDesc('문서 하단의 임베디드 백링크 및 언급을 숨깁니다.')
+			.setName('Hide embedded mentions')
+			.setDesc('Hide embedded backlinks and mentions at the bottom of the document.')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.hideEmbeddedMentions)
 				.onChange(async (value) => {
@@ -171,6 +241,11 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 				file.filePath = ''; // Calendar는 filePath 사용 안 함
 				file.icon = 'calendar-days'; // Calendar 기본 아이콘 설정
 			}
+			
+			// Web 타입으로 변경 시 기본값 설정
+			if (value === 'web') {
+				file.icon = 'globe'; // Web 기본 아이콘 설정
+			}
 				
 				await this.plugin.saveSettings();
 				// 타입 변경시 화면 다시 그리기
@@ -186,42 +261,58 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		}
 	});
 
-		// 위로 버튼 (항상 공간 차지, 첫번째는 비활성화)
+		// Move up button (always takes space, disabled for first item)
 		setting.addButton(button => {
 			if (index > 0) {
 				button
 					.setIcon('arrow-up')
-					.setTooltip('위로')
+					.setTooltip('Move up')
 					.onClick(async () => {
 						const temp = this.plugin.settings.quickAccessFiles[index];
 						this.plugin.settings.quickAccessFiles[index] = this.plugin.settings.quickAccessFiles[index - 1];
 						this.plugin.settings.quickAccessFiles[index - 1] = temp;
+						
+						// Adjust defaultViewIndex if needed
+						if (this.plugin.settings.defaultViewIndex === index + 1) {
+							this.plugin.settings.defaultViewIndex = index;
+						} else if (this.plugin.settings.defaultViewIndex === index) {
+							this.plugin.settings.defaultViewIndex = index + 1;
+						}
+						
 						await this.plugin.saveSettings();
-						this.display();
+						this.display(); // Refresh the entire settings UI
 						this.plugin.customizeEmptyState();
 					});
 			} else {
-				// 첫 번째 항목: 버튼은 있지만 투명하게
+				// First item: button exists but invisible
 				button.buttonEl.style.visibility = 'hidden';
 			}
 		});
 
-		// 아래로 버튼 (항상 공간 차지, 마지막은 비활성화)
+		// Move down button (always takes space, disabled for last item)
 		setting.addButton(button => {
 			if (index < this.plugin.settings.quickAccessFiles.length - 1) {
 				button
 					.setIcon('arrow-down')
-					.setTooltip('아래로')
+					.setTooltip('Move down')
 					.onClick(async () => {
 						const temp = this.plugin.settings.quickAccessFiles[index];
 						this.plugin.settings.quickAccessFiles[index] = this.plugin.settings.quickAccessFiles[index + 1];
 						this.plugin.settings.quickAccessFiles[index + 1] = temp;
+						
+						// Adjust defaultViewIndex if needed
+						if (this.plugin.settings.defaultViewIndex === index + 1) {
+							this.plugin.settings.defaultViewIndex = index + 2;
+						} else if (this.plugin.settings.defaultViewIndex === index + 2) {
+							this.plugin.settings.defaultViewIndex = index + 1;
+						}
+						
 						await this.plugin.saveSettings();
-						this.display();
+						this.display(); // Refresh the entire settings UI
 						this.plugin.customizeEmptyState();
 					});
 			} else {
-				// 마지막 항목: 버튼은 있지만 투명하게
+				// Last item: button exists but invisible
 				button.buttonEl.style.visibility = 'hidden';
 			}
 		});
@@ -272,10 +363,10 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		cls: 'dropdown synaptic-granularity-dropdown'
 	});
 	
-	// 기본 placeholder 옵션 추가
+	// Default placeholder option
 	const placeholderOption = granularitySelect.createEl('option', {
 		value: '',
-		text: '선택하세요...'
+		text: 'Select granularity...'
 	});
 	placeholderOption.disabled = true;
 	placeholderOption.selected = true;
@@ -326,10 +417,10 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		// filePath는 비워둠 (런타임에 계산됨)
 		file.filePath = '';
 	} else if (file.type === 'calendar') {
-		// Calendar 타입일 때는 비활성화된 입력창 표시
+		// Calendar type: no path input needed (calendar button displays a calendar submenu)
 		const textInput = pathWrapper.createEl('input', {
 			type: 'text',
-			placeholder: 'Calendar 기능 (구현 예정)',
+			placeholder: 'No configuration needed',
 			value: '',
 			cls: 'synaptic-file-path-input'
 		});
@@ -340,10 +431,10 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		// filePath는 비워둠 (Calendar는 filePath 사용 안 함)
 		file.filePath = '';
 	} else {
-		// File/Web 타입일 때는 기존 로직
-		let placeholder = '파일 경로';
+		// File/Web type
+		let placeholder = 'File path';
 		if (file.type === 'web') {
-			placeholder = 'URL 입력 (https://...)';
+			placeholder = 'Enter URL (https://...)';
 		}
 		
 		const textInput = pathWrapper.createEl('input', {
@@ -366,6 +457,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 				async (filePath) => {
 					file.filePath = filePath;
 					await this.plugin.saveSettings();
+					this.display(); // Refresh the entire settings UI
 				}
 			);
 		} else if (file.type === 'web') {
@@ -373,6 +465,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 			textInput.addEventListener('blur', async () => {
 				file.filePath = textInput.value;
 				await this.plugin.saveSettings();
+				this.display(); // Refresh the entire settings UI
 			});
 		}
 	}
@@ -383,18 +476,37 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 			.onChange(async (value) => {
 				file.enabled = value;
 				await this.plugin.saveSettings();
+				
+				// Adjust defaultViewIndex if needed
+				const enabledFiles = this.plugin.settings.quickAccessFiles.filter(f => f.enabled);
+				if (enabledFiles.length === 0) {
+					this.plugin.settings.defaultViewIndex = 1;
+				} else if (this.plugin.settings.defaultViewIndex > enabledFiles.length) {
+					this.plugin.settings.defaultViewIndex = enabledFiles.length;
+				}
+				
+				// Only refresh if defaultViewIndex changed
+				if (enabledFiles.length > 0) {
+					this.display(); // Refresh the entire settings UI
+				}
 				this.plugin.customizeEmptyState();
 			}));
 
-		// 삭제 버튼
+		// Delete button
 		setting.addButton(button => button
 			.setIcon('trash')
 			.setWarning()
-			.setTooltip('삭제')
+			.setTooltip('Delete')
 			.onClick(async () => {
 				this.plugin.settings.quickAccessFiles.splice(index, 1);
+				
+				// Adjust defaultViewIndex if needed
+				if (this.plugin.settings.defaultViewIndex > this.plugin.settings.quickAccessFiles.filter(f => f.enabled).length) {
+					this.plugin.settings.defaultViewIndex = Math.max(1, this.plugin.settings.quickAccessFiles.filter(f => f.enabled).length);
+				}
+				
 				await this.plugin.saveSettings();
-				this.display();
+				this.display(); // Refresh the entire settings UI
 				this.plugin.customizeEmptyState();
 			}));
 	}
@@ -405,12 +517,13 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 			type: 'file',
 			filePath: '',
 			icon: 'file-text',
-			enabled: false // 기본값 OFF
+			enabled: false // Default OFF
 		};
 
 		this.plugin.settings.quickAccessFiles.push(newFile);
 		await this.plugin.saveSettings();
-		this.display();
+		this.display(); // Refresh the entire settings UI
+		this.plugin.customizeEmptyState();
 	}
 
 	private generateId(): string {

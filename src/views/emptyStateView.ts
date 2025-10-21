@@ -31,9 +31,9 @@ export class EmptyStateViewManager {
 	async customizeEmptyState() {
 		console.log('[EmptyStateViewManager.customizeEmptyState] 시작');
 		
-		// Quick Access가 비활성화되어 있으면 아무것도 하지 않음 (Obsidian 기본 동작)
-		if (!this.settings.enableQuickAccess) {
-			console.log('[EmptyStateViewManager] Quick Access 비활성화, 종료');
+		// New Tab 대체 기능이 비활성화되어 있으면 아무것도 하지 않음 (Obsidian 기본 동작)
+		if (!this.settings.replaceNewTabWithSynapticView) {
+			console.log('[EmptyStateViewManager] New Tab replacement disabled, exiting');
 			return;
 		}
 
@@ -42,17 +42,17 @@ export class EmptyStateViewManager {
 
 		// 모든 빈 탭을 찾아서 Synaptic View로 변환
 		const leaves = this.app.workspace.getLeavesOfType('empty');
-		console.log('[EmptyStateViewManager] 빈 탭 개수:', leaves.length);
+		console.log('[EmptyStateViewManager] Empty tabs count:', leaves.length);
 		
 		for (const leaf of leaves) {
-			console.log('[EmptyStateViewManager] 빈 탭 처리 시작, leaf:', leaf);
+			console.log('[EmptyStateViewManager] Processing empty tab, leaf:', leaf);
 			
 			const container = leaf.view.containerEl;
 			if (!container) continue;
 			
 			// 활성화된 파일이 있는지 확인
 			const enabledFiles = this.settings.quickAccessFiles.filter(f => f.enabled);
-			console.log('[EmptyStateViewManager] 활성화된 파일 개수:', enabledFiles.length);
+			console.log('[EmptyStateViewManager] Enabled files count:', enabledFiles.length);
 			
 			// 등록된 파일이 없을 때 안내 메시지 표시
 			if (enabledFiles.length === 0) {
@@ -65,12 +65,18 @@ export class EmptyStateViewManager {
 				continue;
 			}
 			
-			// Synaptic View 초기화 (SynapticView 클래스 사용)
+			// defaultViewIndex에 해당하는 파일 선택 (1-based index)
+			const defaultIndex = Math.max(1, Math.min(this.settings.defaultViewIndex, enabledFiles.length));
+			const defaultFile = enabledFiles[defaultIndex - 1];
+			
+			console.log('[EmptyStateViewManager] Default view index:', defaultIndex, 'File:', defaultFile);
+			
+			// Synaptic View 초기화 (defaultFile을 초기 파일로 전달)
 			const synapticView = new SynapticView(this.app, this.settings);
 			this.synapticViews.set(leaf, synapticView);
-			await synapticView.initializeSynapticView(leaf);
+			await synapticView.initializeSynapticView(leaf, defaultFile);
 			
-			console.log('[EmptyStateViewManager] Synaptic View 초기화 완료');
+			console.log('[EmptyStateViewManager] Synaptic View initialization complete');
 		}
 	}
 
@@ -141,17 +147,17 @@ export class EmptyStateViewManager {
 		
 		contentDiv.createEl('h2', { text: '🎯 Synaptic View' });
 		contentDiv.createEl('p', { 
-			text: 'Quick Access가 활성화되어 있지만 등록된 파일이 없습니다.',
+			text: 'No Quick Access items configured.',
 			cls: 'synaptic-setup-text'
 		});
 		contentDiv.createEl('p', { 
-			text: '설정에서 Quick Access 파일을 추가해주세요.',
+			text: 'Add items in settings to get started.',
 			cls: 'synaptic-setup-text'
 		});
 		
 		const buttonDiv = contentDiv.createDiv({ cls: 'synaptic-setup-button-container' });
 		const settingsButton = buttonDiv.createEl('button', { 
-			text: '⚙️ 설정으로 이동',
+			text: '⚙️ Open Settings',
 			cls: 'mod-cta synaptic-setup-button'
 		});
 		

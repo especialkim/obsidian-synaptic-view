@@ -22,9 +22,15 @@ export class JournalSubmenu {
  	}
 
 	addJournalSubmenu(button: HTMLElement, file: QuickAccessFile) {
- 		const submenu = button.createDiv({ cls: 'synaptic-journal-submenu' });
+		// 기존 서브메뉴가 있으면 제거 (중복 방지)
+		const existingSubmenu = button.querySelector('.synaptic-journal-submenu');
+		if (existingSubmenu) {
+			existingSubmenu.remove();
+		}
+		
+		const submenu = button.createDiv({ cls: 'synaptic-journal-submenu' });
 
- 		const availableGranularities = getAvailableGranularities();
+		const availableGranularities = getAvailableGranularities();
 
  		const granularityLabels: Record<JournalGranularity, string> = {
  			'all': 'All',

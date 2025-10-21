@@ -13,7 +13,8 @@ export interface QuickAccessFile {
 }
 
 export interface SynapticViewSettings {
-	enableQuickAccess: boolean;
+	replaceNewTabWithSynapticView: boolean; // Replace New Tab with Synaptic View
+	defaultViewIndex: number; // Default view to show when Synaptic View opens (1-based index)
 	quickAccessFiles: QuickAccessFile[];
 	recentIcons: string[];
 	// View Style Options (Preview mode only)
@@ -22,7 +23,8 @@ export interface SynapticViewSettings {
 }
 
 export const DEFAULT_SETTINGS: SynapticViewSettings = {
-	enableQuickAccess: false,
+	replaceNewTabWithSynapticView: false, // Default: off
+	defaultViewIndex: 1, // Default: first item
 	quickAccessFiles: [],
 	recentIcons: [],
 	hideInlineTitle: true,
