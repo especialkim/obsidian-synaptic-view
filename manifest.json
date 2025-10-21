@@ -1,9 +1,9 @@
 {
 	"id": "obsidian-synaptic-view",
 	"name": "Synaptic View",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "A plugin for visualizing connections between notes in Obsidian.",
+	"description": "Turn the empty new tab into a Synaptic View that unifies your dashboards, hub notes, quick-entry notes, periodic notes, web shortcuts, and calendar navigation—enable it as the default new-tab experience or summon it with a command.",
 	"author": "Yongmini",
 	"authorUrl": "https://x.com/Facilitate4U",
 	"isDesktopOnly": true
