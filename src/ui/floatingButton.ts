@@ -1,4 +1,4 @@
-import { App, setIcon, setTooltip } from 'obsidian';
+import { App, setIcon, setTooltip, TFile, WorkspaceLeaf } from 'obsidian';
 import { createNewFile } from '../actions/createFileAction';
 import { navigateToFile } from '../actions/navigateFileAction';
 import { SynapticViewSettings, QuickAccessFile, JournalGranularity } from '../settings';
@@ -398,10 +398,10 @@ export class FloatingButtonManager {
 
 	private async openInEditMode(filePath: string) {
 		const file = this.app.vault.getAbstractFileByPath(filePath);
-		if (file) {
+		if (file && file instanceof TFile) {
 			// Split right로 편집 모드로 열기
 			const leaf = this.app.workspace.getLeaf('split', 'vertical');
-			await leaf.openFile(file as any, { state: { mode: 'source' } });
+			await leaf.openFile(file, { state: { mode: 'source' } });
 		}
 	}
 

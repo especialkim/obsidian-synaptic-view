@@ -82,7 +82,7 @@
 	max-height: 300px;
 	overflow-y: auto;
 	z-index: 1000;
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+	box-shadow: var(--shadow-s);
 }
 
 .synaptic-file-suggestions .suggestion-item {
@@ -168,7 +168,7 @@
 	right: -2px;
 	background-color: var(--interactive-accent);
 	color: var(--text-on-accent);
-	font-size: 9px;
+	font-size: 0.6em;
 	font-weight: 700;
 	line-height: 1;
 	padding: 2px 3px;
@@ -197,12 +197,12 @@
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 8px;
 	padding: 10px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	box-shadow: var(--shadow-s);
 	z-index: 1000;
 	min-width: 260px;
 	max-width: 260px;
 	/* Base font-size for all inner elements. Tweak this variable to scale the whole calendar. */
-	--syn-cal-font-size: 13px;
+	--syn-cal-font-size: var(--font-ui-small);
 	font-size: var(--syn-cal-font-size);
 }
 
@@ -448,7 +448,7 @@
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 8px;
 	padding: 6px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	box-shadow: var(--shadow-s);
 	z-index: 1000;
 	min-width: 120px;
 }
@@ -506,7 +506,7 @@
 	flex-shrink: 0;
 	background-color: var(--interactive-accent);
 	color: var(--text-on-accent);
-	font-size: 8px;
+	font-size: 0.6em;
 	font-weight: 700;
 	line-height: 1;
 	padding: 2px 4px;
@@ -518,7 +518,7 @@
 /* 서브메뉴 라벨 */
 .synaptic-journal-submenu-label {
 	flex: 1;
-	font-size: 13px;
+	font-size: var(--font-ui-small);
 	color: var(--text-normal);
 }
 
@@ -550,36 +550,17 @@
 .synaptic-calendar-week-number,
 .synaptic-calendar-day,
 .synaptic-journal-submenu-item,
-.synaptic-icon-button,
-button[aria-label="Add new item"],
-.setting-item-control button,
-.setting-item-control .dropdown,
-.setting-item-control select {
-	cursor: pointer !important;
-}
-
-/* Text input cursor */
-.setting-item-control input[type="text"]:not(:disabled) {
-	cursor: text !important;
-}
-
-/* Disabled inputs */
-.setting-item-control input[type="text"]:disabled {
-	cursor: not-allowed !important;
-}
-
-/* Toggle switches */
-.setting-item-control .checkbox-container {
-	cursor: pointer !important;
+.synaptic-icon-button {
+	cursor: pointer;
 }
 
 /* Smooth toggle animation */
 .setting-item-control .checkbox-container input[type="checkbox"] {
-	transition: all 0.2s ease !important;
+	transition: all 0.2s ease;
 }
 
 .setting-item-control .checkbox-container::after {
-	transition: transform 0.2s ease, background-color 0.2s ease !important;
+	transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
 .synaptic-file-item-inline {
@@ -759,7 +740,7 @@ button[aria-label="Add new item"],
 	background-color: var(--background-modifier-hover);
 	border-color: var(--interactive-accent);
 	z-index: 10; /* hover 시 위로 올림 */
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* 그림자 효과 추가 */
+	box-shadow: var(--shadow-s); /* 그림자 효과 추가 */
 }
 
 .synaptic-icon-preview svg {
@@ -777,6 +758,8 @@ button[aria-label="Add new item"],
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+	grid-column: 1 / -1; /* 그리드의 모든 열을 차지 */
+	width: 100%;
 }
 
 .synaptic-no-results-query {

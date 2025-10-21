@@ -31,44 +31,28 @@ export class IconPickerModal extends Modal {
 		this.allIcons = getIconIds();
 
 		// 제목
-		contentEl.createEl('h2', { text: '아이콘 선택' });
+		contentEl.createEl('h2', { text: 'Select Icon' });
 
 		// 검색 입력
 		const searchContainer = contentEl.createDiv({ cls: 'synaptic-icon-search' });
 		this.searchInput = searchContainer.createEl('input', {
 			type: 'text',
-			placeholder: '아이콘 이름 검색 또는 입력... (예: star, heart, book)',
+			placeholder: 'Search icon name... (e.g., star, heart, book)',
 			cls: 'synaptic-icon-search-input'
 		});
 
-		// 직접 입력 버튼
-		const useCustomButton = searchContainer.createEl('button', {
-			text: '직접 사용',
-			cls: 'synaptic-use-custom-icon-btn'
-		});
-		useCustomButton.style.display = 'none';
-
 		// 최근 사용 아이콘 섹션 (최대 20개)
 		if (this.settings.recentIcons.length > 0) {
-			contentEl.createEl('h3', { text: '최근 사용', cls: 'synaptic-icon-section-title' });
+			contentEl.createEl('h3', { text: 'Recent', cls: 'synaptic-icon-section-title' });
 			const recentGrid = contentEl.createDiv({ cls: 'synaptic-icons-grid synaptic-recent-icons' });
 			this.renderIcons(recentGrid, this.settings.recentIcons);
 		}
 
 		// 모든 아이콘 그리드
-		contentEl.createEl('h3', { text: '아이콘 목록', cls: 'synaptic-icon-section-title' });
+		contentEl.createEl('h3', { text: 'All Icons', cls: 'synaptic-icon-section-title' });
 		const allIconsGrid = contentEl.createDiv({ cls: 'synaptic-icons-grid synaptic-all-icons' });
 		this.renderIcons(allIconsGrid, this.allIcons);
 
-		// 직접 사용 버튼 이벤트
-		useCustomButton.addEventListener('click', async () => {
-			const iconName = this.searchInput.value.trim();
-			if (iconName) {
-				await this.addToRecentIcons(iconName);
-				this.onSelect(iconName);
-				this.close();
-			}
-		});
 
 		// 검색 이벤트 (Debouncing 적용)
 		this.searchInput.addEventListener('input', () => {
@@ -83,37 +67,41 @@ export class IconPickerModal extends Modal {
 				
 				if (query.length === 0) {
 					// 검색어 없을 때 기본 화면
-					useCustomButton.style.display = 'none';
 					if (this.settings.recentIcons.length > 0) {
 						contentEl.querySelector('.synaptic-recent-icons')?.removeClass('synaptic-hidden');
 						contentEl.querySelectorAll('.synaptic-icon-section-title')[0]?.removeClass('synaptic-hidden');
 					}
 					allIconsGrid.removeClass('synaptic-hidden');
 					contentEl.querySelectorAll('.synaptic-icon-section-title')[1]?.removeClass('synaptic-hidden');
-					contentEl.querySelectorAll('.synaptic-icon-section-title')[1]?.setText('아이콘 목록');
+					contentEl.querySelectorAll('.synaptic-icon-section-title')[1]?.setText('All Icons');
 				} else {
 					// 검색 중
 					if (this.settings.recentIcons.length > 0) {
 						contentEl.querySelector('.synaptic-recent-icons')?.addClass('synaptic-hidden');
 						contentEl.querySelectorAll('.synaptic-icon-section-title')[0]?.addClass('synaptic-hidden');
 					}
-					contentEl.querySelectorAll('.synaptic-icon-section-title')[1]?.setText('검색 결과');
+					contentEl.querySelectorAll('.synaptic-icon-section-title')[1]?.setText('Search Results');
 					
 					// 캐싱된 목록에서 필터링
 					const filtered = this.allIcons.filter(icon => 
 						icon.toLowerCase().includes(query)
 					);
 					
-					// 검색 결과 없으면 "직접 사용" 버튼 표시
-					if (filtered.length === 0) {
-						useCustomButton.style.display = 'block';
-					} else {
-						useCustomButton.style.display = 'none';
-					}
-					
 					this.renderIcons(allIconsGrid, filtered, query);
 				}
 			}, 150); // 150ms 딜레이
+		});
+
+		// Enter 키로 커스텀 아이콘 사용
+		this.searchInput.addEventListener('keydown', async (e) => {
+			if (e.key === 'Enter') {
+				const iconName = this.searchInput.value.trim();
+				if (iconName) {
+					await this.addToRecentIcons(iconName);
+					this.onSelect(iconName);
+					this.close();
+				}
+			}
 		});
 
 		// 포커스
@@ -125,10 +113,10 @@ export class IconPickerModal extends Modal {
 
 		if (icons.length === 0) {
 			const noResults = container.createDiv({ cls: 'synaptic-no-results' });
-			noResults.createEl('p', { text: '검색 결과가 없습니다.' });
+			noResults.createEl('p', { text: 'No search results found.' });
 			if (query) {
 				noResults.createEl('p', { 
-					text: `"${query}"와 일치하는 아이콘이 없습니다.`,
+					text: `No icons matching "${query}" found.`,
 					cls: 'synaptic-no-results-query'
 				});
 			}

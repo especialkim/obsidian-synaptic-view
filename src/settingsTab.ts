@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, setIcon } from 'obsidian';
+import { App, PluginSettingTab, Setting, setIcon, DropdownComponent } from 'obsidian';
 import SynapticViewPlugin from '../main';
 import { QuickAccessFile, JournalGranularity } from './settings';
 import { IconPickerModal } from './ui/iconPickerModal';
@@ -14,7 +14,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 	}
 
 	/**
-	 * Journal Granularity에 맞는 Lucide 아이콘 이름 반환
+	 * Journal note type에 맞는 Lucide 아이콘 이름 반환
 	 */
 	private getJournalIcon(granularity?: JournalGranularity): string {
 		const iconMap: Record<JournalGranularity, string> = {
@@ -93,24 +93,51 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 	/**
 	 * Update Default view dropdown options
 	 */
-	private updateDefaultViewDropdown(dropdown: any, enabledFiles: QuickAccessFile[]) {
+	private updateDefaultViewDropdown(dropdown: DropdownComponent, enabledFiles: QuickAccessFile[]) {
 		// Clear existing options
 		dropdown.selectEl.empty();
 		
 		// Add new options
 		enabledFiles.forEach((file, index) => {
-			const label = this.getFileLabel(file, index + 1);
-			dropdown.addOption((index + 1).toString(), label);
+			const optionIndex = (index + 1).toString();
+			let label = this.getFileLabel(file, index + 1);
+			
+			// Journal "All"과 Calendar는 submenu이므로 선택 불가
+			const isSubmenu = (file.type === 'journal' && file.granularity === 'all') || file.type === 'calendar';
+			
+			if (isSubmenu) {
+				label += ' (submenu - not selectable)';
+			}
+			
+			const option = dropdown.addOption(optionIndex, label);
+			
+			// submenu 항목은 비활성화
+			if (isSubmenu) {
+				const optionEl = dropdown.selectEl.querySelector(`option[value="${optionIndex}"]`) as HTMLOptionElement;
+				if (optionEl) {
+					optionEl.disabled = true;
+				}
+			}
 		});
 		
-		// Ensure current value is valid
+		// Ensure current value is valid (submenu가 아닌 항목으로)
 		const currentValue = this.plugin.settings.defaultViewIndex.toString();
-		if (enabledFiles.length > 0 && enabledFiles[this.plugin.settings.defaultViewIndex - 1]) {
+		const currentFile = enabledFiles[this.plugin.settings.defaultViewIndex - 1];
+		const isCurrentSubmenu = currentFile && ((currentFile.type === 'journal' && currentFile.granularity === 'all') || currentFile.type === 'calendar');
+		
+		if (enabledFiles.length > 0 && currentFile && !isCurrentSubmenu) {
 			dropdown.setValue(currentValue);
 		} else if (enabledFiles.length > 0) {
-			// If current index is invalid, set to first item
-			this.plugin.settings.defaultViewIndex = 1;
-			dropdown.setValue('1');
+			// 유효하지 않거나 submenu이면 첫 번째 selectable 항목으로 설정
+			for (let i = 0; i < enabledFiles.length; i++) {
+				const file = enabledFiles[i];
+				const isSubmenu = (file.type === 'journal' && file.granularity === 'all') || file.type === 'calendar';
+				if (!isSubmenu) {
+					this.plugin.settings.defaultViewIndex = i + 1;
+					dropdown.setValue((i + 1).toString());
+					break;
+				}
+			}
 		}
 	}
 
@@ -229,10 +256,10 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 			// Journal 타입으로 변경 시 기본값 설정
 			if (value === 'journal') {
 				const availableGranularities = getAvailableGranularities();
-				// Granularity는 초기화 (사용자가 직접 선택하도록)
+				// Note type은 초기화 (사용자가 직접 선택하도록)
 				file.granularity = undefined;
 				file.filePath = ''; // Journal은 filePath 사용 안 함
-				// 아이콘은 비워둠 (Granularity 선택 시 자동 설정)
+				// 아이콘은 비워둠 (Note type 선택 시 자동 설정)
 				file.icon = '';
 			}
 			
@@ -350,15 +377,15 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		});
 	}
 
-	// 파일 경로/URL 입력 또는 Granularity 선택 (wrapper로 감싸서 position relative 적용)
+	// 파일 경로/URL 입력 또는 Note type 선택 (wrapper로 감싸서 position relative 적용)
 	const pathWrapper = createDiv({ cls: 'synaptic-file-path-wrapper' });
 	setting.controlEl.appendChild(pathWrapper);
 	
-	// Journal 타입일 때는 Granularity 드롭다운 표시
+	// Journal 타입일 때는 Note type 드롭다운 표시
 	if (file.type === 'journal') {
 		const availableGranularities = getAvailableGranularities();
 		
-	// Granularity 드롭다운을 select 요소로 추가
+	// Note type 드롭다운을 select 요소로 추가
 	const granularitySelect = pathWrapper.createEl('select', {
 		cls: 'dropdown synaptic-granularity-dropdown'
 	});
@@ -366,20 +393,20 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 	// Default placeholder option
 	const placeholderOption = granularitySelect.createEl('option', {
 		value: '',
-		text: 'Select granularity...'
+		text: 'Select note type...'
 	});
 	placeholderOption.disabled = true;
 	placeholderOption.selected = true;
 	
-	// "All" 옵션 추가 (모든 granularity 사용 가능할 때만)
+	// "All" 옵션 추가 (모든 note type 사용 가능할 때만)
 	if (availableGranularities.length > 1) {
 		const allOption = granularitySelect.createEl('option', {
 			value: 'all',
 			text: 'All'
 		});
 	}
-		
-	// Granularity 옵션들 추가
+	
+	// Note type 옵션들 추가
 	const granularityLabels: Record<JournalGranularity, string> = {
 		'all': 'All',
 		'day': 'Daily',
@@ -405,10 +432,10 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		file.granularity = undefined; // 초기화
 	}
 		
-	// 변경 이벤트 - Granularity 선택 시 디폴트 아이콘 자동 설정
+	// 변경 이벤트 - Note type 선택 시 디폴트 아이콘 자동 설정
 	granularitySelect.addEventListener('change', async () => {
 		file.granularity = granularitySelect.value as JournalGranularity;
-		file.icon = this.getJournalIcon(file.granularity); // Granularity에 맞는 아이콘 설정
+		file.icon = this.getJournalIcon(file.granularity); // Note type에 맞는 아이콘 설정
 		await this.plugin.saveSettings();
 		this.display(); // 아이콘 업데이트를 위해 화면 다시 그리기
 		this.plugin.customizeEmptyState();

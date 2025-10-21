@@ -27,6 +27,7 @@ import {
 	getYearlyNoteSettings
 } from 'obsidian-daily-notes-interface';
 import { JournalGranularity } from '../settings';
+import { PeriodicNoteSettings } from '../obsidian-ex';
 
 /**
  * 특정 플러그인이 설치되고 활성화되어 있는지 확인
@@ -35,7 +36,6 @@ import { JournalGranularity } from '../settings';
  * @returns 플러그인이 설치되고 활성화되어 있으면 true
  */
 export function isPluginEnabled(app: App, pluginId: string): boolean {
-	// @ts-ignore - app.plugins는 타입 정의에 없지만 실제로 존재
 	const plugins = app.plugins;
 	
 	if (!plugins) {
@@ -179,7 +179,7 @@ export function getTodayDailyNotePath(): string {
  */
 export function getJournalNotePath(granularity: JournalGranularity): string {
 	const today = moment();
-	let settings: any;
+	let settings: PeriodicNoteSettings;
 	let formatPattern: string;
 	
 	try {
@@ -230,7 +230,7 @@ export async function createJournalNote(granularity: JournalGranularity): Promis
 		
 		const today = moment();
 		let existingFile: TFile | null = null;
-		let createFunc: (date: any) => Promise<TFile>;
+		let createFunc: (date: moment.Moment) => Promise<TFile>;
 		
 		// Granularity별로 존재 여부 확인 및 생성 함수 선택
 		switch (granularity) {

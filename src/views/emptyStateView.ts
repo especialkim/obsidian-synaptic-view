@@ -1,4 +1,4 @@
-import { App, TFile, Component, WorkspaceLeaf } from 'obsidian';
+import { App, TFile, Component, WorkspaceLeaf, MarkdownView } from 'obsidian';
 import { SynapticViewSettings } from '../settings';
 import { SynapticView } from './synapticView';
 import { openPluginSettings } from '../utils/openSettings';
@@ -199,7 +199,7 @@ export class EmptyStateViewManager {
 				}
 				
 				// 현재 leaf에 열린 파일 확인
-				const file = (leaf.view as any).file as TFile | undefined;
+				const file = leaf.view instanceof MarkdownView ? leaf.view.file : undefined;
 				const filePath = file?.path || null;
 				
 				console.log('[EmptyStateViewManager] 파일 경로:', filePath);

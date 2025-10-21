@@ -6,8 +6,8 @@ import { App } from 'obsidian';
  * @param pluginId - 이동할 플러그인 ID (기본값: 'obsidian-synaptic-view')
  */
 export async function openPluginSettings(app: App, pluginId: string = 'obsidian-synaptic-view'): Promise<void> {
-	const setting = (app as any).setting;
-	await setting.open();
-	setting.openTabById(pluginId);
+	// Obsidian의 공식 API를 사용하여 설정 열기
+	await app.setting.open();
+	app.setting.openTabById(pluginId);
 }
 
