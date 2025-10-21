@@ -87,7 +87,6 @@
 
 .synaptic-file-suggestions .suggestion-item {
 	padding: 8px 12px;
-	cursor: pointer;
 	border-bottom: 1px solid var(--background-modifier-border);
 }
 
@@ -131,7 +130,6 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	cursor: pointer;
 	transition: all 0.2s ease;
 	color: var(--text-muted);
 }
@@ -247,7 +245,6 @@
 }
 
 .synaptic-calendar-nav-btn {
-	cursor: pointer;
 	padding: 0.25em;
 	border-radius: 4px;
 	color: var(--text-muted);
@@ -274,7 +271,6 @@
 	font-weight: 600;
 	color: var(--text-normal);
 	font-size: 1em;
-	cursor: pointer;
 	padding: 0.35em 0.6em;
 	border-radius: 4px;
 	transition: all 0.15s ease;
@@ -289,7 +285,6 @@
 	font-weight: 600;
 	color: var(--text-normal);
 	font-size: 1em;
-	cursor: pointer;
 	padding: 0.35em 0.6em;
 	border-radius: 4px;
 	transition: all 0.15s ease;
@@ -312,7 +307,6 @@
 	padding: 0.5em 0.3em;
 	background-color: var(--background-secondary);
 	border-radius: 4px;
-	cursor: pointer;
 	font-size: 0.85em;
 	font-weight: 600;
 	text-align: center;
@@ -340,12 +334,20 @@
 
 .synaptic-calendar-weekday {
 	text-align: center;
-	font-size: 0.85em;
-	font-weight: 700;
+	font-size: 0.75em;
+	font-weight: 600;
 	color: var(--text-muted);
-	padding: 0.35em 0.2em;
+	padding: 0.3em 0.15em;
 	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	letter-spacing: 0.3px;
+}
+
+/* 한글 요일은 1글자라서 좀 더 크게 */
+.synaptic-calendar-weekday.is-korean {
+	font-size: 0.9em;
+	font-weight: 700;
+	text-transform: none;
+	letter-spacing: 0;
 }
 
 .synaptic-calendar-weekday-week {
@@ -386,7 +388,6 @@
 	font-size: 0.85em;
 	font-weight: 600;
 	color: var(--text-faint);
-	cursor: pointer;
 	border-radius: 4px;
 	transition: all 0.15s ease;
 }
@@ -402,7 +403,6 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	cursor: pointer;
 	border-radius: 4px;
 	font-size: 0.9em;
 	font-weight: 500;
@@ -478,7 +478,6 @@
 	gap: 8px;
 	padding: 6px 10px;
 	border-radius: 6px;
-	cursor: pointer;
 	transition: background-color 0.15s ease;
 	white-space: nowrap;
 }
@@ -537,21 +536,9 @@
 }
 
 /* Add new item button - remove top border */
-.setting-item:has(button[aria-label="Add new item"]) {
+.setting-item:has(button[aria-label="Add new item"]),
+.setting-item:has(button[aria-label="새 항목 추가"]) {
 	border-top: none !important;
-}
-
-/* Cursor styles for interactive elements */
-.synaptic-action-button,
-.synaptic-calendar-nav-btn,
-.synaptic-calendar-year,
-.synaptic-calendar-month,
-.synaptic-calendar-quarter-btn,
-.synaptic-calendar-week-number,
-.synaptic-calendar-day,
-.synaptic-journal-submenu-item,
-.synaptic-icon-button {
-	cursor: pointer;
 }
 
 /* Smooth toggle animation */
@@ -662,7 +649,6 @@
 	color: var(--text-on-accent);
 	border: none;
 	border-radius: 4px;
-	cursor: pointer;
 	white-space: nowrap;
 	font-weight: 500;
 }
@@ -729,7 +715,6 @@
 	height: 50px;
 	border: 2px solid var(--background-modifier-border);
 	border-radius: 4px;
-	cursor: pointer;
 	transition: all 0.15s ease;
 	background-color: var(--background-primary);
 	position: relative; /* z-index 적용을 위해 */
@@ -780,4 +765,60 @@
 .synaptic-viewer-container.hide-embedded-mentions .backlink,
 .synaptic-viewer-container.hide-embedded-mentions .metadata-container {
 	display: none;
+}
+
+/* ========================================
+   Cursor Styles - Unified Management
+   ======================================== */
+
+/* Settings Tab - 모든 클릭 가능한 요소들 */
+.synaptic-view-settings button,
+.synaptic-view-settings select,
+.synaptic-view-settings .dropdown,
+.synaptic-view-settings .checkbox-container,
+.synaptic-view-settings .clickable-icon,
+.synaptic-view-settings .suggestion-item {
+	cursor: pointer !important;
+}
+
+/* Settings Tab - 텍스트 입력 요소들 */
+.synaptic-view-settings input[type="text"],
+.synaptic-view-settings input[type="url"],
+.synaptic-view-settings input[type="search"],
+.synaptic-view-settings textarea {
+	cursor: text !important;
+}
+
+/* Settings Tab - 비활성화된 요소들 */
+.synaptic-view-settings button:disabled,
+.synaptic-view-settings select:disabled,
+.synaptic-view-settings input:disabled,
+.synaptic-view-settings textarea:disabled {
+	cursor: not-allowed !important;
+}
+
+/* Action Buttons (Floating buttons in view) */
+.synaptic-action-button {
+	cursor: pointer;
+}
+
+/* Calendar Submenu 클릭 요소들 */
+.synaptic-calendar-nav-btn,
+.synaptic-calendar-year,
+.synaptic-calendar-month,
+.synaptic-calendar-quarter-btn,
+.synaptic-calendar-week-number,
+.synaptic-calendar-day {
+	cursor: pointer;
+}
+
+/* Journal Submenu 클릭 요소들 */
+.synaptic-journal-submenu-item {
+	cursor: pointer;
+}
+
+/* Icon Picker Modal 클릭 요소들 */
+.synaptic-icon-item,
+.synaptic-icon-button {
+	cursor: pointer;
 }

@@ -11,23 +11,21 @@ export default class SynapticViewPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		console.log('Synaptic View plugin loaded');
-
-		// Empty State View Manager 초기화
+		// Empty State View Manager initialization
 		this.emptyStateManager = new EmptyStateViewManager(this.app, this.settings);
 
-		// 설정 탭 등록
+		// Register settings tab
 		this.addSettingTab(new SynapticViewSettingTab(this.app, this));
 
-		// 커맨드 등록
+		// Register commands
 		registerCommands(this);
 
-		// 레이아웃이 준비된 후 실행
+		// Execute after layout is ready
 		this.app.workspace.onLayoutReady(() => {
 			this.customizeEmptyState();
 		});
 
-		// 레이아웃 변경 시마다 체크
+		// Check on layout changes
 		this.registerEvent(
 			this.app.workspace.on('layout-change', () => {
 				this.customizeEmptyState();
@@ -36,7 +34,7 @@ export default class SynapticViewPlugin extends Plugin {
 	}
 
 	onunload() {
-		console.log('Synaptic View plugin unloaded');
+		// Plugin unloaded
 	}
 
 	async customizeEmptyState() {

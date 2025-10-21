@@ -225,10 +225,8 @@ export function getJournalNotePath(granularity: JournalGranularity): string {
  * @returns 생성된 TFile 또는 null
  */
 export async function createJournalNote(granularity: JournalGranularity): Promise<TFile | null> {
-	try {
-		console.log(`[Synaptic View] ${granularity} Journal Note 생성 시작`);
-		
-		const today = moment();
+		try {
+			const today = moment();
 		let existingFile: TFile | null = null;
 		let createFunc: (date: moment.Moment) => Promise<TFile>;
 		
@@ -260,32 +258,26 @@ export async function createJournalNote(granularity: JournalGranularity): Promis
 				createFunc = createYearlyNote;
 				break;
 			default:
-				console.error('[Synaptic View] 지원하지 않는 granularity:', granularity);
 				return null;
 		}
 		
-		// 이미 존재하면 반환
-		if (existingFile) {
-			console.log(`[Synaptic View] ${granularity} Journal Note가 이미 존재:`, existingFile.path);
-			return existingFile;
+			// 이미 존재하면 반환
+			if (existingFile) {
+				return existingFile;
+			}
+		
+			// 파일 생성
+			const file = await createFunc(today);
+		
+			if (file) {
+				return file;
+			}
+			
+			return null;
+		
+		} catch (error) {
+			return null;
 		}
-		
-		// 파일 생성
-		console.log(`[Synaptic View] ${granularity} Journal Note 생성 중...`);
-		const file = await createFunc(today);
-		
-		if (file) {
-			console.log(`[Synaptic View] ${granularity} Journal Note 생성 완료:`, file.path);
-			return file;
-		}
-		
-		console.error(`[Synaptic View] ${granularity} Journal Note 생성 실패`);
-		return null;
-		
-	} catch (error) {
-		console.error(`[Synaptic View] ${granularity} Journal Note 생성 중 오류:`, error);
-		return null;
-	}
 }
 
 /**

@@ -29,11 +29,8 @@ export class EmptyStateViewManager {
 	}
 
 	async customizeEmptyState() {
-		console.log('[EmptyStateViewManager.customizeEmptyState] 시작');
-		
 		// New Tab 대체 기능이 비활성화되어 있으면 아무것도 하지 않음 (Obsidian 기본 동작)
 		if (!this.settings.replaceNewTabWithSynapticView) {
-			console.log('[EmptyStateViewManager] New Tab replacement disabled, exiting');
 			return;
 		}
 
@@ -42,17 +39,14 @@ export class EmptyStateViewManager {
 
 		// 모든 빈 탭을 찾아서 Synaptic View로 변환
 		const leaves = this.app.workspace.getLeavesOfType('empty');
-		console.log('[EmptyStateViewManager] Empty tabs count:', leaves.length);
 		
 		for (const leaf of leaves) {
-			console.log('[EmptyStateViewManager] Processing empty tab, leaf:', leaf);
 			
 			const container = leaf.view.containerEl;
 			if (!container) continue;
 			
 			// 활성화된 파일이 있는지 확인
 			const enabledFiles = this.settings.quickAccessFiles.filter(f => f.enabled);
-			console.log('[EmptyStateViewManager] Enabled files count:', enabledFiles.length);
 			
 			// 등록된 파일이 없을 때 안내 메시지 표시
 			if (enabledFiles.length === 0) {
@@ -69,14 +63,10 @@ export class EmptyStateViewManager {
 			const defaultIndex = Math.max(1, Math.min(this.settings.defaultViewIndex, enabledFiles.length));
 			const defaultFile = enabledFiles[defaultIndex - 1];
 			
-			console.log('[EmptyStateViewManager] Default view index:', defaultIndex, 'File:', defaultFile);
-			
 			// Synaptic View 초기화 (defaultFile을 초기 파일로 전달)
 			const synapticView = new SynapticView(this.app, this.settings);
 			this.synapticViews.set(leaf, synapticView);
 			await synapticView.initializeSynapticView(leaf, defaultFile);
-			
-			console.log('[EmptyStateViewManager] Synaptic View initialization complete');
 		}
 	}
 
@@ -85,8 +75,6 @@ export class EmptyStateViewManager {
 	 * QuickAccess를 통하지 않은 파일 열기 시 Synaptic View 속성 제거
 	 */
 	private handleFileOpen(file: TFile | null) {
-		console.log('[EmptyStateViewManager.handleFileOpen] 파일 열림:', file?.path);
-		
 		if (!file) return;
 		
 		// 활성화된 leaf 확인
@@ -102,18 +90,15 @@ export class EmptyStateViewManager {
 		// 해당 leaf의 SynapticView 인스턴스 확인
 		const synapticView = this.synapticViews.get(activeLeaf);
 		if (!synapticView) {
-			console.log('[EmptyStateViewManager.handleFileOpen] SynapticView 인스턴스 없음');
 			return;
 		}
 		
 		// QuickAccess를 통한 탐색인지 확인
 		if (synapticView.isQuickAccessNavigationActive()) {
-			console.log('[EmptyStateViewManager.handleFileOpen] QuickAccess 탐색 - 유지');
 			return;
 		}
 		
 		// QuickAccess가 아닌 다른 방법으로 파일을 열었으면 Synaptic View 속성 제거
-		console.log('[EmptyStateViewManager.handleFileOpen] 일반 파일 탐색 감지 - Synaptic View 속성 제거');
 		
 		// data-synaptic-managed 제거
 		container.removeAttribute('data-synaptic-managed');
@@ -131,14 +116,11 @@ export class EmptyStateViewManager {
 			const floatingButtons = viewContent.querySelector('.synaptic-action-buttons');
 			if (floatingButtons) {
 				floatingButtons.remove();
-				console.log('[EmptyStateViewManager.handleFileOpen] 플로팅 버튼 제거');
 			}
 		}
 		
 		// synapticViews Map에서 제거
 		this.synapticViews.delete(activeLeaf);
-		
-		console.log('[EmptyStateViewManager.handleFileOpen] Synaptic View 속성 제거 완료');
 	}
 
 	private showSetupMessage(container: HTMLElement) {
@@ -167,8 +149,6 @@ export class EmptyStateViewManager {
 	}
 
 	private cleanupNonSynapticTabs() {
-		console.log('[EmptyStateViewManager.cleanupNonSynapticTabs] Synaptic View 클래스 정리 시작');
-		
 		// Quick Access 파일 경로 목록 준비
 		const quickAccessPaths = this.settings.quickAccessFiles
 			.filter(f => f.enabled)
@@ -181,7 +161,6 @@ export class EmptyStateViewManager {
 				return f.filePath;
 			});
 		
-		console.log('[EmptyStateViewManager] Quick Access 파일 경로:', quickAccessPaths);
 		
 		// 모든 leaf를 순회하면서 정리
 		this.app.workspace.iterateAllLeaves(leaf => {
@@ -189,12 +168,10 @@ export class EmptyStateViewManager {
 			
 			// synaptic-viewer-container 클래스가 있는 컨테이너만 체크
 			if (container.hasClass('synaptic-viewer-container')) {
-				console.log('[EmptyStateViewManager] Synaptic 컨테이너 발견, leaf 타입:', leaf.view.getViewType());
 				
 				// Synaptic View로 관리되는 leaf는 건드리지 않음
 				// (data-synaptic-managed attribute로 표시됨)
 				if (container.getAttribute('data-synaptic-managed') === 'true') {
-					console.log('[EmptyStateViewManager] Synaptic View로 관리되는 leaf - 유지');
 					return;
 				}
 				
@@ -202,19 +179,15 @@ export class EmptyStateViewManager {
 				const file = leaf.view instanceof MarkdownView ? leaf.view.file : undefined;
 				const filePath = file?.path || null;
 				
-				console.log('[EmptyStateViewManager] 파일 경로:', filePath);
 				
 				// Quick Access 파일인지 확인
 				const isQuickAccessFile = filePath && quickAccessPaths.includes(filePath);
 				
-				console.log('[EmptyStateViewManager] isQuickAccessFile:', isQuickAccessFile);
 				
 				if (!isQuickAccessFile) {
-					console.log('[EmptyStateViewManager] 일반 파일 감지, 정리 시작');
 					
 					// synaptic-viewer-container 클래스 제거
 					container.removeClass('synaptic-viewer-container');
-					console.log('[EmptyStateViewManager] 컨테이너 클래스 제거');
 					
 					// 플로팅 버튼 제거 (.view-content 내부 확인)
 					const viewContent = container.querySelector('.view-content');
@@ -222,7 +195,6 @@ export class EmptyStateViewManager {
 						const floatingButtons = viewContent.querySelector('.synaptic-action-buttons');
 						if (floatingButtons) {
 							floatingButtons.remove();
-							console.log('[EmptyStateViewManager] 플로팅 버튼 제거 (.view-content 내부)');
 						}
 					}
 					
@@ -230,7 +202,6 @@ export class EmptyStateViewManager {
 					const directButtons = container.querySelector('.synaptic-action-buttons');
 					if (directButtons) {
 						directButtons.remove();
-						console.log('[EmptyStateViewManager] 플로팅 버튼 제거 (직속)');
 					}
 				}
 			}
@@ -238,7 +209,6 @@ export class EmptyStateViewManager {
 		
 		// 탭 헤더의 synaptic-view-tab 클래스도 정리
 		const synapticTabHeaders = document.querySelectorAll('.workspace-tab-header.synaptic-view-tab');
-		console.log('[EmptyStateViewManager] Synaptic View 탭 헤더 개수:', synapticTabHeaders.length);
 		
 		synapticTabHeaders.forEach(tabHeader => {
 			const tabEl = tabHeader as HTMLElement;
@@ -256,7 +226,6 @@ export class EmptyStateViewManager {
 				quickAccessFileNames.includes(ariaLabel);
 			
 			if (!isQuickAccessFile) {
-				console.log('[EmptyStateViewManager] 일반 탭 헤더 클래스 제거:', ariaLabel);
 				tabHeader.removeClass('synaptic-view-tab');
 			}
 		});

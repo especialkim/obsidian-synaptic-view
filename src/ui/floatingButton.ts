@@ -1,4 +1,4 @@
-import { App, setIcon, setTooltip, TFile, WorkspaceLeaf } from 'obsidian';
+import { App, setIcon, setTooltip, TFile } from 'obsidian';
 import { createNewFile } from '../actions/createFileAction';
 import { navigateToFile } from '../actions/navigateFileAction';
 import { SynapticViewSettings, QuickAccessFile, JournalGranularity } from '../settings';
@@ -6,6 +6,7 @@ import { openPluginSettings } from '../utils/openSettings';
 import { getJournalNotePath } from '../utils/pluginChecker';
 import { CalendarSubmenu } from './calendarSubmenu';
 import { JournalSubmenu } from './journalSubmenu';
+import { t } from '../utils/i18n';
 
 export interface ActionButton {
 	id: string;
@@ -56,11 +57,13 @@ export class FloatingButtonManager {
 }
 
 	private addDefaultButtons(container: HTMLElement) {
+		const translations = t();
+		
 		// 새 파일 생성
 		const createButton = container.createDiv({ cls: 'synaptic-action-button' });
-		createButton.setAttribute('aria-label', '새 파일 생성');
+		createButton.setAttribute('aria-label', translations.buttons.createNewFile);
 		setIcon(createButton, 'file-plus');
-		setTooltip(createButton, '새 파일 생성', { delay: 100 });
+		setTooltip(createButton, translations.buttons.createNewFile, { delay: 100 });
 		createButton.addEventListener('click', async (e) => {
 			e.stopPropagation();
 			await createNewFile(this.app);
@@ -68,9 +71,9 @@ export class FloatingButtonManager {
 
 		// 파일 검색
 		const searchButton = container.createDiv({ cls: 'synaptic-action-button' });
-		searchButton.setAttribute('aria-label', '파일 검색');
+		searchButton.setAttribute('aria-label', translations.buttons.searchFiles);
 		setIcon(searchButton, 'search');
-		setTooltip(searchButton, '파일 검색', { delay: 100 });
+		setTooltip(searchButton, translations.buttons.searchFiles, { delay: 100 });
 		searchButton.addEventListener('click', (e) => {
 			e.stopPropagation();
 			navigateToFile(this.app);
@@ -78,6 +81,8 @@ export class FloatingButtonManager {
 	}
 
 	private addQuickAccessButtons(container: HTMLElement) {
+		const translations = t();
+		
 		// enabled=true인 파일들만 버튼으로 추가
 		const enabledFiles = this.settings.quickAccessFiles.filter(f => f.enabled);
 
@@ -92,12 +97,12 @@ export class FloatingButtonManager {
 			// Granularity 라벨 생성
 			const granularity = file.granularity || 'day';
 			const granularityLabels: Record<JournalGranularity, string> = {
-				'all': 'All',
-				'day': 'Daily',
-				'week': 'Weekly',
-				'month': 'Monthly',
-				'quarter': 'Quarterly',
-				'year': 'Yearly'
+				'all': translations.settings.granularity.all,
+				'day': translations.settings.granularity.day,
+				'week': translations.settings.granularity.week,
+				'month': translations.settings.granularity.month,
+				'quarter': translations.settings.granularity.quarter,
+				'year': translations.settings.granularity.year
 			};
 			fileName = granularityLabels[granularity];
 			
@@ -106,13 +111,13 @@ export class FloatingButtonManager {
 			actualFilePath = granularity === 'all' ? '' : getJournalNotePath(granularity);
 		} else if (file.type === 'calendar') {
 			// Calendar 타입
-			fileName = 'Calendar';
+			fileName = translations.settings.fileType.calendar;
 			actualFilePath = ''; // Calendar는 아직 기능 없음
 		} else {
 				// File/Web 타입
 				fileName = file.filePath 
 					? file.filePath.split('/').pop()?.replace('.md', '') || file.filePath
-					: '파일 없음';
+								: translations.settings.placeholder.noFile;
 				actualFilePath = file.filePath;
 			}
 			
@@ -149,12 +154,12 @@ export class FloatingButtonManager {
 	if (file.type === 'journal') {
 		const granularity = file.granularity || 'day';
 		const badgeLabels: Record<JournalGranularity, string> = {
-			'all': 'J',  // Journal
-			'day': 'D',
-			'week': 'W',
-			'month': 'M',
-			'quarter': 'Q',
-			'year': 'Y'
+			'all': translations.settings.badges.journal,
+			'day': translations.settings.badges.day,
+			'week': translations.settings.badges.week,
+			'month': translations.settings.badges.month,
+			'quarter': translations.settings.badges.quarter,
+			'year': translations.settings.badges.year
 		};
 		const badgeText = badgeLabels[granularity];
 		button.setAttribute('data-badge-text', badgeText); // 배지 텍스트 저장
@@ -171,7 +176,7 @@ export class FloatingButtonManager {
 	
 	// Web 타입이면 배지 추가
 	if (file.type === 'web') {
-		const badgeText = 'Web';
+		const badgeText = translations.settings.badges.web;
 		button.setAttribute('data-badge-text', badgeText); // 배지 텍스트 저장
 		
 		const badge = button.createDiv({ cls: 'synaptic-journal-badge' });
@@ -180,7 +185,7 @@ export class FloatingButtonManager {
 	
 	// Calendar 타입이면 배지 추가 및 서브메뉴 생성
 	if (file.type === 'calendar') {
-		const badgeText = 'Cal';
+		const badgeText = translations.settings.badges.calendar;
 		button.setAttribute('data-badge-text', badgeText); // 배지 텍스트 저장
 		
 		const badge = button.createDiv({ cls: 'synaptic-journal-badge' });
@@ -218,13 +223,6 @@ export class FloatingButtonManager {
 	button.addEventListener('click', (e) => {
 		e.stopPropagation();
 		
-		// // All 버튼 클릭 시 서브메뉴 토글 (주석 처리 - hover로만 작동)
-		// const buttonGranularity = button.getAttribute('data-granularity');
-		// if (file.type === 'journal' && buttonGranularity === 'all') {
-		// 	console.log('[FloatingButton] All 버튼 클릭 - 서브메뉴 토글');
-		// 	this.toggleSubmenu(button);
-		// 	return;
-		// }
 		
 	// Ctrl/Cmd + 클릭: 편집 모드로 split right에서 열기 (file, journal, calendar 타입)
 	if ((e.ctrlKey || e.metaKey) && (file.type === 'file' || file.type === 'journal' || file.type === 'calendar')) {
@@ -232,33 +230,17 @@ export class FloatingButtonManager {
 		const isCalendarButton = file.type === 'calendar';
 		const isActive = button.hasClass('synaptic-action-button-active');
 		
-		console.log('[Cmd/Ctrl + 클릭] 버튼 ID:', file.id, '/ 타입:', file.type, '/ granularity:', file.granularity);
-		console.log('[Cmd/Ctrl + 클릭] isAllButton:', isAllButton, '/ isCalendarButton:', isCalendarButton, '/ isActive:', isActive);
-		console.log('[Cmd/Ctrl + 클릭] currentFilePath:', this.currentFilePath);
-		console.log('[Cmd/Ctrl + 클릭] actualFilePath:', actualFilePath);
-		
 		// ALL 또는 Calendar 버튼인 경우
 		if (isAllButton || isCalendarButton) {
 			// 활성화되어 있고, currentFilePath가 있으면 편집 모드로 열기
 			if (isActive && this.currentFilePath) {
-				console.log('[Cmd/Ctrl + 클릭] ALL/Calendar 버튼 - 편집 모드로 열기:', this.currentFilePath);
 				this.openInEditMode(this.currentFilePath);
-			} else {
-				console.warn('[Cmd/Ctrl + 클릭] ALL/Calendar 버튼 - 조건 불충족');
 			}
 		} else {
 			// 일반 버튼인 경우 (Daily, Weekly, Yearly 등)
 			// 버튼이 활성화되어 있고, actualFilePath가 currentFilePath와 일치하면 편집 모드로 열기
 			if (isActive && actualFilePath && actualFilePath === this.currentFilePath) {
-				console.log('[Cmd/Ctrl + 클릭] 일반 버튼 - 편집 모드로 열기:', actualFilePath);
 				this.openInEditMode(actualFilePath);
-			} else {
-				console.warn('[Cmd/Ctrl + 클릭] 일반 버튼 - 조건 불충족', {
-					isActive,
-					actualFilePath,
-					currentFilePath: this.currentFilePath,
-					match: actualFilePath === this.currentFilePath
-				});
 			}
 		}
 	} else {
@@ -266,7 +248,6 @@ export class FloatingButtonManager {
 		// ALL 버튼은 클릭 무시 (서브메뉴로만 선택 가능)
 		const isAllButton = file.type === 'journal' && (file.granularity === 'all');
 		if (isAllButton) {
-			console.log('[FloatingButton] ALL 버튼 클릭 무시 - 서브메뉴를 사용하세요');
 			return;
 		}
 		
@@ -321,29 +302,28 @@ export class FloatingButtonManager {
 			if ((fileType === 'journal' && granularity === 'all') || fileType === 'calendar') {
 				// 버튼이 활성화되어 있으면 편집 아이콘 표시 가능
 				if (isActive) {
-					if (this.isModifierKeyPressed && btn.matches(':hover')) {
-						console.log('[편집 모드] ALL/Calendar 버튼 - 편집 아이콘 표시');
-						this.showEditIcon(btn as HTMLElement);
-					} else {
-						this.restoreOriginalIcon(btn as HTMLElement);
-					}
+				if (this.isModifierKeyPressed && btn.matches(':hover')) {
+					this.showEditIcon(btn as HTMLElement);
+				} else {
+					this.restoreOriginalIcon(btn as HTMLElement);
+				}
 				}
 			} 
 			// 일반 버튼의 경우
 			else if (filePath && 
 			    filePath === this.currentFilePath && 
 			    (fileType === 'file' || fileType === 'journal')) {
-				if (this.isModifierKeyPressed && btn.matches(':hover')) {
-					console.log('[편집 모드] 일반 버튼 - 편집 아이콘 표시:', filePath);
-					this.showEditIcon(btn as HTMLElement);
-				} else {
-					this.restoreOriginalIcon(btn as HTMLElement);
-				}
+			if (this.isModifierKeyPressed && btn.matches(':hover')) {
+				this.showEditIcon(btn as HTMLElement);
+			} else {
+				this.restoreOriginalIcon(btn as HTMLElement);
+			}
 			}
 		});
 	}
 
 	private showEditIcon(button: HTMLElement) {
+		const translations = t();
 		button.addClass('edit-mode');
 		
 		// 서브메뉴 임시 저장 (삭제 방지)
@@ -355,7 +335,7 @@ export class FloatingButtonManager {
 		button.empty();
 		setIcon(button, 'pencil');
 		const originalTooltip = button.getAttribute('data-original-tooltip') || '';
-		setTooltip(button, `${originalTooltip} 편집`, { delay: 100 });
+			setTooltip(button, `${originalTooltip} ${translations.buttons.edit}`, { delay: 100 });
 		
 		// Journal 배지 복원
 		const badgeText = button.getAttribute('data-badge-text');
@@ -406,11 +386,13 @@ export class FloatingButtonManager {
 	}
 
 	private addSettingsButton(container: HTMLElement) {
+		const translations = t();
+		
 		// 설정 버튼
 		const settingsButton = container.createDiv({ cls: 'synaptic-action-button synaptic-settings-button' });
-		settingsButton.setAttribute('aria-label', '설정');
+		settingsButton.setAttribute('aria-label', translations.buttons.settings);
 		setIcon(settingsButton, 'settings');
-		setTooltip(settingsButton, '설정', { delay: 100 });
+		setTooltip(settingsButton, translations.buttons.settings, { delay: 100 });
 		settingsButton.addEventListener('click', async (e) => {
 			e.stopPropagation();
 			await openPluginSettings(this.app);
