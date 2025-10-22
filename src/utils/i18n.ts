@@ -30,6 +30,13 @@ interface Translations {
 				desc: string;
 			};
 		};
+		misc: {
+			title: string;
+			showDailyNoteBadge: {
+				name: string;
+				desc: string;
+			};
+		};
 		fileType: {
 			file: string;
 			web: string;
@@ -79,6 +86,18 @@ interface Translations {
 			selectNoteType: string;
 			enterFilePath: string;
 			enterUrl: string;
+			fileNotFound: string;
+			checkSettings: string;
+		};
+		setup: {
+			title: string;
+			noItems: string;
+			addItems: string;
+			openSettings: string;
+		};
+		emptyState: {
+			noItems: string;
+			addFirstItem: string;
 		};
 	};
 	
@@ -118,6 +137,13 @@ const ko: Translations = {
 			hideEmbeddedMentions: {
 				name: '임베디드 멘션 숨기기',
 				desc: '문서 하단의 임베디드 백링크와 멘션을 숨깁니다.'
+			}
+		},
+		misc: {
+			title: '기타',
+			showDailyNoteBadge: {
+				name: 'Daily Note 태스크 배지 표시',
+				desc: 'Journal/Calendar 버튼에 오늘 Daily Note의 미완료 태스크 개수를 배지로 표시합니다.'
 			}
 		},
 		fileType: {
@@ -168,7 +194,19 @@ const ko: Translations = {
 		notices: {
 			selectNoteType: '먼저 노트 타입 (일간, 주간 등)을 선택하세요.',
 			enterFilePath: '파일 경로를 입력하세요.',
-			enterUrl: 'URL을 입력하세요.'
+			enterUrl: 'URL을 입력하세요.',
+			fileNotFound: '파일이 존재하지 않습니다.',
+			checkSettings: 'Quick Access 설정을 확인해보세요.'
+		},
+		setup: {
+			title: '🎯 Synaptic View',
+			noItems: 'Quick Access 항목이 설정되지 않았습니다.',
+			addItems: '설정에서 항목을 추가하여 시작하세요.',
+			openSettings: '⚙️ 설정 열기'
+		},
+		emptyState: {
+			noItems: '아직 항목이 없습니다.',
+			addFirstItem: '+ 버튼을 눌러 첫 번째 Quick Access 항목을 추가하세요.'
 		}
 	},
 	buttons: {
@@ -206,6 +244,13 @@ const en: Translations = {
 			hideEmbeddedMentions: {
 				name: 'Hide embedded mentions',
 				desc: 'Hide embedded backlinks and mentions at the bottom of the document.'
+			}
+		},
+		misc: {
+			title: 'Misc',
+			showDailyNoteBadge: {
+				name: 'Show Daily Note task badge',
+				desc: 'Show a badge on Journal/Calendar buttons indicating incomplete tasks in today\'s Daily Note.'
 			}
 		},
 		fileType: {
@@ -256,7 +301,19 @@ const en: Translations = {
 		notices: {
 			selectNoteType: 'Please select a note type (Daily, Weekly, etc.) first.',
 			enterFilePath: 'Please enter a file path.',
-			enterUrl: 'Please enter a URL.'
+			enterUrl: 'Please enter a URL.',
+			fileNotFound: 'File does not exist.',
+			checkSettings: 'Please check Quick Access settings.'
+		},
+		setup: {
+			title: '🎯 Synaptic View',
+			noItems: 'No Quick Access items configured.',
+			addItems: 'Add items in settings to get started.',
+			openSettings: '⚙️ Open Settings'
+		},
+		emptyState: {
+			noItems: 'No items yet.',
+			addFirstItem: 'Click + button to add your first Quick Access item.'
 		}
 	},
 	buttons: {

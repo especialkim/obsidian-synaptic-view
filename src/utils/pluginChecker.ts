@@ -312,11 +312,11 @@ export async function getDailyNoteTaskCount(app: App): Promise<{ incomplete: num
 		// 파일 내용 읽기
 		const content = await app.vault.read(file);
 		
-		// 미완료 task 카운팅 (- [ ])
-		const incompleteTasks = (content.match(/^- \[ \]/gm) || []).length;
+		// 미완료 task 카운팅 (들여쓰기 포함: ^\s*- [ ])
+		const incompleteTasks = (content.match(/^\s*- \[ \]/gm) || []).length;
 		
-		// 완료된 task 카운팅 (- [x] 또는 - [X])
-		const completedTasks = (content.match(/^- \[x\]/gmi) || []).length;
+		// 완료된 task 카운팅 (들여쓰기 포함: ^\s*- [x] 또는 - [X])
+		const completedTasks = (content.match(/^\s*- \[x\]/gmi) || []).length;
 		
 		return {
 			incomplete: incompleteTasks,

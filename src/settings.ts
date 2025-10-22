@@ -20,6 +20,8 @@ export interface SynapticViewSettings {
 	// View Style Options (Preview mode only)
 	hideInlineTitle: boolean;
 	hideEmbeddedMentions: boolean;
+	// Misc Options
+	showDailyNoteBadge: boolean; // Show Daily Note task badge on Journal/Calendar buttons
 }
 
 export const DEFAULT_SETTINGS: SynapticViewSettings = {
@@ -28,6 +30,7 @@ export const DEFAULT_SETTINGS: SynapticViewSettings = {
 	quickAccessFiles: [],
 	recentIcons: [],
 	hideInlineTitle: true,
-	hideEmbeddedMentions: true
+	hideEmbeddedMentions: true,
+	showDailyNoteBadge: false // Default: off
 }
 

@@ -1,12 +1,13 @@
 import { App } from 'obsidian';
 import { SynapticView } from '../views/synapticView';
 import { SynapticViewSettings } from '../settings';
+import { DailyNoteBadgeManager } from '../ui/dailyNoteBadge';
 
 /**
  * Synaptic View 탭을 여는 커맨드
  * 새로운 탭을 생성하고 Synaptic View UI를 표시합니다.
  */
-export async function openSynapticViewTab(app: App, settings: SynapticViewSettings): Promise<void> {
+export async function openSynapticViewTab(app: App, settings: SynapticViewSettings, dailyNoteBadgeManager: DailyNoteBadgeManager): Promise<void> {
 	// 새로운 빈 탭 생성
 	const newLeaf = app.workspace.getLeaf('tab');
 	
@@ -20,7 +21,7 @@ export async function openSynapticViewTab(app: App, settings: SynapticViewSettin
 	app.workspace.setActiveLeaf(newLeaf, { focus: true });
 	
 	// Synaptic View 초기화
-	const synapticView = new SynapticView(app, settings);
+	const synapticView = new SynapticView(app, settings, dailyNoteBadgeManager);
 	await synapticView.initializeSynapticView(newLeaf);
 }
 

@@ -3,9 +3,10 @@ import { createNewFile } from '../actions/createFileAction';
 import { navigateToFile } from '../actions/navigateFileAction';
 import { SynapticViewSettings, QuickAccessFile, JournalGranularity } from '../settings';
 import { openPluginSettings } from '../utils/openSettings';
-import { getJournalNotePath, getDailyNoteTaskCount, isJournalAvailable } from '../utils/pluginChecker';
+import { getJournalNotePath, isJournalAvailable } from '../utils/pluginChecker';
 import { CalendarSubmenu } from './calendarSubmenu';
 import { JournalSubmenu } from './journalSubmenu';
+import { DailyNoteBadgeManager } from './dailyNoteBadge';
 import { t } from '../utils/i18n';
 
 export interface ActionButton {
@@ -25,8 +26,9 @@ export class FloatingButtonManager {
 	private isModifierKeyPressed: boolean = false;
 	private calendarSubmenu: CalendarSubmenu;
     private journalSubmenu: JournalSubmenu;
+	private dailyNoteBadgeManager: DailyNoteBadgeManager;
 
-	constructor(app: App, settings: SynapticViewSettings, onFileSelect: (quickAccessFile: QuickAccessFile) => void, currentFilePath: string | null = null, currentActiveButtonId: string | null = null) {
+	constructor(app: App, settings: SynapticViewSettings, onFileSelect: (quickAccessFile: QuickAccessFile) => void, dailyNoteBadgeManager: DailyNoteBadgeManager, currentFilePath: string | null = null, currentActiveButtonId: string | null = null) {
 		this.app = app;
 		this.settings = settings;
 		this.onFileSelect = onFileSelect;
@@ -34,6 +36,7 @@ export class FloatingButtonManager {
 		this.currentActiveButtonId = currentActiveButtonId;
 		this.calendarSubmenu = new CalendarSubmenu(app, settings, onFileSelect, (filePath: string, activeButtonId?: string) => this.updateActiveButton(filePath, activeButtonId));
 		this.journalSubmenu = new JournalSubmenu(app, settings, onFileSelect, (filePath: string, activeButtonId?: string) => this.updateActiveButton(filePath, activeButtonId));
+		this.dailyNoteBadgeManager = dailyNoteBadgeManager;
 	}
 
 	async addFloatingButton(container: HTMLElement) {
@@ -55,8 +58,12 @@ export class FloatingButtonManager {
 	// 외부 클릭 시 서브메뉴 닫기
 	this.setupOutsideClickListener();
 	
-	// Daily Note task 배지 업데이트
-	await this.updateDailyNoteTaskBadges();
+	// Daily Note task 배지 업데이트 (설정이 켜져있을 때만)
+	if (this.settings.showDailyNoteBadge) {
+		// 배지 매니저에 버튼 컨테이너 설정 (metadataCache 이벤트에서 사용)
+		this.dailyNoteBadgeManager.setButtonContainer(this.buttonContainer);
+		await this.dailyNoteBadgeManager.updateDailyNoteTaskBadges(this.buttonContainer);
+	}
 }
 
 	private addDefaultButtons(container: HTMLElement) {
@@ -254,6 +261,13 @@ export class FloatingButtonManager {
 			return;
 		}
 		
+		// Calendar 버튼: Daily Notes가 활성화되어 있으면 오늘 Daily Note 열기
+		const isCalendarButton = file.type === 'calendar';
+		if (isCalendarButton) {
+			this.openTodayDailyNote();
+			return;
+		}
+		
 		this.updateActiveButton(actualFilePath, file.id);
 		this.onFileSelect(file);
 	}
@@ -363,10 +377,7 @@ export class FloatingButtonManager {
 		submenus.forEach(submenu => submenu.detach());
 		
 		// Task 배지 임시 저장 (삭제 방지)
-		const taskBadge = button.querySelector('.synaptic-task-badge') as HTMLElement;
-		if (taskBadge) {
-			taskBadge.detach();
-		}
+		const taskBadge = DailyNoteBadgeManager.saveTaskBadge(button);
 		
 		button.empty();
 		setIcon(button, originalIcon);
@@ -380,9 +391,7 @@ export class FloatingButtonManager {
 		}
 		
 		// Task 배지 복원
-		if (taskBadge) {
-			button.appendChild(taskBadge);
-		}
+		DailyNoteBadgeManager.restoreTaskBadge(button, taskBadge);
 		
 		// 서브메뉴 복원
 		submenus.forEach(submenu => button.appendChild(submenu));
@@ -454,80 +463,39 @@ export class FloatingButtonManager {
 	}
 
 	/**
-	 * Daily Note task 배지를 업데이트합니다.
-	 * 우선순위: Journal Daily > Journal All > Calendar (하나만 표시)
+	 * 오늘 Daily Note를 엽니다 (Calendar 버튼 클릭 시 사용)
 	 */
-	private async updateDailyNoteTaskBadges() {
-		// Daily Notes가 활성화되어 있지 않으면 배지를 표시하지 않음
+	private openTodayDailyNote() {
+		// Daily Notes가 활성화되어 있지 않으면 아무것도 하지 않음
 		if (!isJournalAvailable()) {
+			console.log('[Synaptic View] Daily Notes is not enabled');
 			return;
 		}
 
-		// Daily Note task 개수 가져오기
-		const taskCount = await getDailyNoteTaskCount(this.app);
-		
-		// Daily Note가 없거나 task 카운팅 실패 시 배지를 표시하지 않음
-		if (!taskCount) {
+		// Calendar 버튼 찾기
+		const calendarFile = this.settings.quickAccessFiles.find(f => f.type === 'calendar' && f.enabled);
+		if (!calendarFile) {
+			console.log('[Synaptic View] Calendar button not found');
 			return;
 		}
 
-		const { incomplete, completed } = taskCount;
-		const totalTasks = incomplete + completed;
-
-		// buttonContainer가 없으면 종료
-		if (!this.buttonContainer) return;
-
-		// 우선순위에 따라 하나의 버튼만 선택
-		let selectedButton: HTMLElement | null = null;
+		// 오늘 Daily Note 경로 가져오기
+		const todayPath = getJournalNotePath('day');
 		
-		// 1순위: Journal Daily
-		selectedButton = this.buttonContainer.querySelector('.synaptic-action-button[data-file-type="journal"][data-granularity="day"]') as HTMLElement;
-		
-		// 2순위: Journal All (Daily가 없을 때만)
-		if (!selectedButton) {
-			selectedButton = this.buttonContainer.querySelector('.synaptic-action-button[data-file-type="journal"][data-granularity="all"]') as HTMLElement;
-		}
-		
-		// 3순위: Calendar (Journal이 없을 때만)
-		if (!selectedButton) {
-			selectedButton = this.buttonContainer.querySelector('.synaptic-action-button[data-file-type="calendar"]') as HTMLElement;
-		}
+		// Calendar 버튼 활성화 상태로 업데이트
+		this.updateActiveButton(todayPath, calendarFile.id);
 
-		// 선택된 버튼이 있으면 task 배지 추가
-		if (selectedButton) {
-			this.addTaskBadge(selectedButton, incomplete, totalTasks);
-		}
+		// Journal Daily 타입의 QuickAccessFile을 생성하여 onFileSelect 호출
+		const todayDailyFile: QuickAccessFile = {
+			id: 'temp-daily-from-calendar',
+			type: 'journal',
+			filePath: '', // getJournalNotePath에서 자동 계산됨
+			icon: 'calendar-days',
+			enabled: true,
+			granularity: 'day'
+		};
+
+		this.onFileSelect(todayDailyFile);
 	}
 
-	/**
-	 * 버튼에 task 배지를 추가합니다.
-	 * @param button - 배지를 추가할 버튼 엘리먼트
-	 * @param incomplete - 미완료 task 개수
-	 * @param totalTasks - 전체 task 개수
-	 */
-	private addTaskBadge(button: HTMLElement, incomplete: number, totalTasks: number) {
-		// 기존 task 배지 제거 (중복 방지)
-		const existingBadge = button.querySelector('.synaptic-task-badge');
-		if (existingBadge) {
-			existingBadge.remove();
-		}
-
-		// task가 하나도 없으면 배지를 표시하지 않음
-		if (totalTasks === 0) {
-			return;
-		}
-
-		// task 배지 생성
-		const badge = button.createDiv({ cls: 'synaptic-task-badge' });
-
-		// 모든 task가 완료되었으면 초록색 점
-		if (incomplete === 0) {
-			badge.addClass('synaptic-task-badge-completed');
-			badge.textContent = '✓';
-		} else {
-			// 미완료 task가 있으면 빨간색 배지에 개수 표시
-			badge.addClass('synaptic-task-badge-incomplete');
-			badge.textContent = incomplete.toString();
-		}
-	}
 }

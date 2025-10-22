@@ -57,10 +57,11 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		// === Quick Access Items ===
 		containerEl.createEl('h3', { text: translations.settings.quickAccessItems });
 		
-		// Item list
-		this.renderQuickAccessFiles(containerEl);
+		// Item list container with background
+		const itemsContainer = containerEl.createDiv({ cls: 'synaptic-items-container' });
+		this.renderQuickAccessFiles(itemsContainer);
 
-		// Add button (simple "+")
+		// Add button (simple "+") - outside the container
 		new Setting(containerEl)
 			.addButton(button => button
 				.setButtonText('+')
@@ -192,10 +193,8 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		containerEl.createEl('h3', { text: translations.settings.viewStyle.title });
 		
 		// Notice
-		const noticeEl = containerEl.createDiv({ cls: 'setting-item-description' });
+		const noticeEl = containerEl.createDiv({ cls: 'setting-item-description synaptic-settings-notice' });
 		noticeEl.setText(translations.settings.viewStyle.notice);
-		noticeEl.style.color = 'var(--text-muted)';
-		noticeEl.style.fontStyle = 'italic';
 
 		// Hide inline title option
 		new Setting(containerEl)
@@ -220,14 +219,42 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 					this.plugin.customizeEmptyState();
 				}));
+		
+		// Misc Section
+		containerEl.createEl('h3', { text: translations.settings.misc?.title || 'Misc' });
+		
+		new Setting(containerEl)
+			.setName(translations.settings.misc?.showDailyNoteBadge?.name || 'Show Daily Note task badge')
+			.setDesc(translations.settings.misc?.showDailyNoteBadge?.desc || 'Show a badge on Journal/Calendar buttons indicating incomplete tasks in today\'s Daily Note.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.showDailyNoteBadge)
+				.onChange(async (value) => {
+					this.plugin.settings.showDailyNoteBadge = value;
+					await this.plugin.saveSettings();
+					this.plugin.customizeEmptyState();
+				}));
 	}
 
 	private renderQuickAccessFiles(containerEl: HTMLElement) {
+		const translations = t();
 		const filesContainer = containerEl.createDiv({ cls: 'synaptic-quick-access-files' });
 
-		this.plugin.settings.quickAccessFiles.forEach((file, index) => {
-			this.renderFileItemInline(filesContainer, file, index);
-		});
+		if (this.plugin.settings.quickAccessFiles.length === 0) {
+			// 빈 상태 메시지 표시
+			const emptyState = filesContainer.createDiv({ cls: 'synaptic-empty-items' });
+			emptyState.createDiv({ 
+				cls: 'synaptic-empty-items-title',
+				text: translations.settings.emptyState.noItems 
+			});
+			emptyState.createDiv({ 
+				cls: 'synaptic-empty-items-desc',
+				text: translations.settings.emptyState.addFirstItem 
+			});
+		} else {
+			this.plugin.settings.quickAccessFiles.forEach((file, index) => {
+				this.renderFileItemInline(filesContainer, file, index);
+			});
+		}
 	}
 
 	private renderFileItemInline(container: HTMLElement, file: QuickAccessFile, index: number) {
@@ -258,10 +285,10 @@ export class SynapticViewSettingTab extends PluginSettingTab {
             dropdown.addOption('calendar', translations.settings.fileType.calendar);
         }
 		
-		dropdown
-			.setValue(file.type)
-			.onChange(async (value) => {
-				
+			dropdown
+				.setValue(file.type)
+				.onChange(async (value) => {
+					
                 if (value === 'journal' && !isJournalActive) {
 					// Journal 기능이 비활성화되어 있으면 경고
 					dropdown.setValue(file.type);
@@ -295,6 +322,9 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 			if (value === 'web') {
 				file.icon = 'globe'; // Web 기본 아이콘 설정
 			}
+				
+				// 타입 변경 시 enabled를 false로 설정 (설정이 무효화될 수 있음)
+				file.enabled = false;
 				
 				await this.plugin.saveSettings();
 				// 타입 변경시 화면 다시 그리기
@@ -334,7 +364,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 					});
 			} else {
 				// First item: button exists but invisible
-				button.buttonEl.style.visibility = 'hidden';
+				button.buttonEl.addClass('synaptic-button--hidden');
 			}
 		});
 
@@ -362,7 +392,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 					});
 			} else {
 				// Last item: button exists but invisible
-				button.buttonEl.style.visibility = 'hidden';
+				button.buttonEl.addClass('synaptic-button--hidden');
 			}
 		});
 
@@ -395,7 +425,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 	} else {
 		// Journal 타입이고 아이콘 없을 때: 빈 공간 유지 (레이아웃 정렬용)
 		setting.addButton(button => {
-			button.buttonEl.style.visibility = 'hidden';
+			button.buttonEl.addClass('synaptic-button--hidden');
 		});
 	}
 
@@ -459,6 +489,9 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 				file.granularity = granularitySelect.value as JournalGranularity;
 				file.icon = this.getJournalIcon(file.granularity); // Note type에 맞는 아이콘 설정
 				
+				// granularity 변경 시 enabled를 false로 설정 (설정이 무효화될 수 있음)
+				file.enabled = false;
+				
 				await this.plugin.saveSettings();
 				this.display(); // 아이콘 업데이트를 위해 화면 다시 그리기
 				this.plugin.customizeEmptyState();
@@ -475,8 +508,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 			cls: 'synaptic-file-path-input'
 		});
 		textInput.disabled = true;
-		textInput.style.opacity = '0.5';
-		textInput.style.cursor = 'not-allowed';
+		textInput.addClass('synaptic-input--disabled');
 		
 		// filePath는 비워둠 (Calendar는 filePath 사용 안 함)
 		file.filePath = '';
@@ -494,10 +526,9 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 			cls: 'synaptic-file-path-input'
 		});
 
-			// File 타입일 때 자동완성 드롭다운 제공
-			if (file.type === 'file') {
-				const suggestionsEl = pathWrapper.createDiv({ cls: 'synaptic-file-suggestions' });
-				suggestionsEl.style.display = 'none';
+				// File 타입일 때 자동완성 드롭다운 제공
+				if (file.type === 'file') {
+					const suggestionsEl = pathWrapper.createDiv({ cls: 'synaptic-file-suggestions' });
 
 				// FilePathSuggest 모듈 사용
 				new FilePathSuggest(
@@ -506,6 +537,8 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 					suggestionsEl,
 					async (filePath) => {
 						file.filePath = filePath;
+						// 파일 경로 변경 시 enabled를 false로 설정 (새로운 경로가 유효하지 않을 수 있음)
+						file.enabled = false;
 						await this.plugin.saveSettings();
 						this.display(); // Refresh the entire settings UI
 					}
@@ -514,6 +547,8 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 				// Web 타입일 때는 일반 input 이벤트로 처리
 				textInput.addEventListener('blur', async () => {
 					file.filePath = textInput.value;
+					// URL 변경 시 enabled를 false로 설정 (새로운 URL이 유효하지 않을 수 있음)
+					file.enabled = false;
 					await this.plugin.saveSettings();
 					this.display(); // Refresh the entire settings UI
 				});

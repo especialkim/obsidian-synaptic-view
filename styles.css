@@ -56,11 +56,25 @@
 .synaptic-file-path-wrapper {
 	position: relative;
 	flex: 1;
-	min-width: 200px;
+	min-width: 0; /* flex item이 축소될 수 있도록 */
 }
 
 .synaptic-file-path-input {
 	width: 100%;
+	padding: 6px 8px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+	box-sizing: border-box;
+	font-size: var(--font-ui-small);
+}
+
+/* Journal granularity dropdown - 파일 경로 입력과 동일한 크기 */
+.synaptic-granularity-dropdown {
+	width: 100% !important;
+	flex: 1;
+	min-width: 0;
 	padding: 6px 8px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: 4px;
@@ -76,7 +90,7 @@
 	left: 0;
 	right: 0;
 	margin-top: 4px;
-	border: 1px solid var(--background-modifier-border);
+	/* border: 1px solid var(--background-modifier-border); */
 	border-radius: 4px;
 	background-color: var(--background-primary);
 	max-height: 300px;
@@ -202,15 +216,15 @@
 
 /* Task 완료 시 초록색 배지 (체크 표시) */
 .synaptic-task-badge-completed {
-	background-color: #10b981;
-	color: white;
+	background-color: var(--color-green, #10b981);
+	color: var(--text-on-accent, white);
 	font-size: 0.7em;
 }
 
 /* Task 미완료 시 빨간색 배지 (숫자 표시) */
 .synaptic-task-badge-incomplete {
-	background-color: #ef4444;
-	color: white;
+	background-color: var(--color-red, #ef4444);
+	color: var(--text-on-accent, white);
 }
 
 /* 설정 버튼에는 배지 절대 표시 안 함 */
@@ -578,6 +592,35 @@
 	transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
+/* Quick Access Items Container */
+.synaptic-items-container {
+	background-color: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	padding: 1rem;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Empty state for items */
+.synaptic-empty-items {
+	padding: 2rem;
+	text-align: center;
+	color: var(--text-muted);
+}
+
+.synaptic-empty-items-title {
+	font-size: 1em;
+	font-weight: 600;
+	margin-bottom: 0.5rem;
+	color: var(--text-normal);
+}
+
+.synaptic-empty-items-desc {
+	font-size: 0.9em;
+	font-style: italic;
+	color: var(--text-muted);
+}
+
 .synaptic-file-item-inline {
 	margin: 0 !important;
 	padding: 0.5rem 0 0 0!important;
@@ -860,4 +903,34 @@
 .synaptic-icon-item,
 .synaptic-icon-button {
 	cursor: pointer;
+}
+
+/* ========================================
+   Settings Tab - Style Management Classes
+   ======================================== */
+
+/* Notice message styling */
+.synaptic-settings-notice {
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+/* Hidden button styling */
+.synaptic-button--hidden {
+	visibility: hidden;
+}
+
+/* Disabled input styling */
+.synaptic-input--disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/* Suggestions visibility */
+.synaptic-suggestions {
+	display: none;
+}
+
+.synaptic-suggestions.is-visible {
+	display: block;
 }

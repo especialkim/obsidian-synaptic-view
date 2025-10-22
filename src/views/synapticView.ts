@@ -1,7 +1,9 @@
-import { App, TFile, WorkspaceLeaf, setIcon } from 'obsidian';
+import { App, TFile, WorkspaceLeaf, setIcon, Notice } from 'obsidian';
 import { SynapticViewSettings, QuickAccessFile, JournalGranularity } from '../settings';
 import { FloatingButtonManager } from '../ui/floatingButton';
+import { DailyNoteBadgeManager } from '../ui/dailyNoteBadge';
 import { getJournalNotePath, createJournalNote } from '../utils/pluginChecker';
+import { t } from '../utils/i18n';
 
 /**
  * Synaptic View의 핵심 로직을 담당하는 클래스
@@ -15,10 +17,12 @@ export class SynapticView {
 	private floatingButtonManager: FloatingButtonManager | null = null;
 	private currentFilePath: string | null = null;
 	private isQuickAccessNavigation: boolean = false;
+	private dailyNoteBadgeManager: DailyNoteBadgeManager;
 
-	constructor(app: App, settings: SynapticViewSettings) {
+	constructor(app: App, settings: SynapticViewSettings, dailyNoteBadgeManager: DailyNoteBadgeManager) {
 		this.app = app;
 		this.settings = settings;
+		this.dailyNoteBadgeManager = dailyNoteBadgeManager;
 	}
 
 	/**
@@ -87,6 +91,7 @@ export class SynapticView {
 			this.app,
 			this.settings,
 			(qaf) => this.loadFile(leaf, qaf, false),
+			this.dailyNoteBadgeManager,
 			preservedFilePath,
 			preservedActiveButtonId
 		);
@@ -133,14 +138,37 @@ export class SynapticView {
 			// File/Journal Note 타입: Obsidian 파일 열기
 			let file = this.app.vault.getAbstractFileByPath(filePath);
 
+			console.log('[Synaptic View] Loading file/journal:', {
+				type: quickAccessFile.type,
+				filePath,
+				fileExists: !!file,
+				granularity: quickAccessFile.type === 'journal' ? granularity : 'N/A'
+			});
+
 			// Journal Note 타입이고 파일이 없으면 granularity에 맞게 생성
 			if (!file && quickAccessFile.type === 'journal') {
+				console.log('[Synaptic View] Creating journal note:', granularity);
 				file = await createJournalNote(granularity);
 				if (!file) {
+					console.log('[Synaptic View] Failed to create journal note');
 					return;
 			}
 				// 생성된 파일의 실제 경로로 업데이트
 				filePath = file.path;
+				console.log('[Synaptic View] Journal note created:', filePath);
+			}
+
+			// File 타입인데 파일이 존재하지 않으면 사용자에게 알림하고 빈 상태로 UI만 표시
+			if (!file && quickAccessFile.type === 'file') {
+				const fileName = filePath.split('/').pop() || filePath;
+				const translations = t();
+				new Notice(`📄 "${fileName}" ${translations.settings.notices.fileNotFound}\n${translations.settings.notices.checkSettings}`);
+				console.warn('[Synaptic View] File not found:', filePath);
+				
+				// 파일이 없어도 플로팅 버튼은 표시 (다른 파일로 전환 가능하도록)
+				this.setLeafTitle(leaf, iconName);
+				this.addFloatingButtonsOnly(leaf);
+				return;
 			}
 
 			if (file instanceof TFile) {
@@ -151,6 +179,7 @@ export class SynapticView {
 
 				// DOM이 업데이트될 때까지 기다린 후 뷰 타이틀 변경 & 버튼 추가
 				setTimeout(() => {
+					console.log('[Synaptic View] Setting title and UI after file open, icon:', iconName);
 					this.setLeafTitle(leaf, iconName);
 					
 					// 활성 버튼 ID 설정: 초기 로드 시 또는 현재 활성 버튼 ID 유지
@@ -196,26 +225,38 @@ export class SynapticView {
 	 * 탭 타이틀과 아이콘을 설정합니다.
 	 */
 	private setLeafTitle(leaf: WorkspaceLeaf, iconName: string) {
-		const activeTabContainer = document.querySelector('.workspace-tabs.mod-active');
+		// leaf의 tabHeaderEl을 직접 사용 (활성화 여부와 관계없이)
+		const tabHeaderEl = (leaf as WorkspaceLeaf & { tabHeaderEl?: HTMLElement }).tabHeaderEl;
 		
-		if (activeTabContainer) {
-			const activeTabHeader = activeTabContainer.querySelector('.workspace-tab-header.is-active');
+		console.log('[Synaptic View] setLeafTitle called:', {
+			hasTabHeaderEl: !!tabHeaderEl,
+			iconName,
+			leafId: (leaf as WorkspaceLeaf & { id?: string }).id
+		});
+		
+		if (tabHeaderEl) {
+			// Synaptic View 탭임을 표시하는 클래스 추가
+			tabHeaderEl.addClass('synaptic-view-tab');
 			
-			if (activeTabHeader) {
-				// Synaptic View 탭임을 표시하는 클래스 추가
-				activeTabHeader.addClass('synaptic-view-tab');
-				
-				const titleEl = activeTabHeader.querySelector('.workspace-tab-header-inner-title');
-				const iconEl = activeTabHeader.querySelector('.workspace-tab-header-inner-icon');
-				
-				if (titleEl) {
-					titleEl.setText('Synaptic View');
-				}
-				
-				// 아이콘 설정
-				if (iconEl) {
-					this.setTabIcon(iconEl, iconName);
-				}
+			// 아이콘 이름을 data attribute로 저장 (탭 전환 시에도 유지)
+			tabHeaderEl.setAttribute('data-synaptic-icon', iconName);
+			
+			const titleEl = tabHeaderEl.querySelector('.workspace-tab-header-inner-title');
+			const iconEl = tabHeaderEl.querySelector('.workspace-tab-header-inner-icon');
+			
+			console.log('[Synaptic View] Tab elements found:', {
+				hasTitleEl: !!titleEl,
+				hasIconEl: !!iconEl,
+				currentIconData: tabHeaderEl.getAttribute('data-synaptic-icon')
+			});
+			
+			if (titleEl) {
+				titleEl.setText('Synaptic View');
+			}
+			
+			// 아이콘 설정
+			if (iconEl) {
+				this.setTabIcon(iconEl, iconName);
 			}
 		}
 	}
@@ -287,6 +328,7 @@ export class SynapticView {
 					this.app,
 					this.settings,
 					(qaf) => this.loadFile(leaf, qaf, false),
+					this.dailyNoteBadgeManager,
 					actualFilePath,
 					previousActiveButtonId
 				);

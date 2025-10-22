@@ -87,7 +87,7 @@ export class FilePathSuggest {
 	}
 
 	private handleKeyDown(e: KeyboardEvent) {
-		const isVisible = this.suggestionsEl.style.display === 'block';
+		const isVisible = this.suggestionsEl.classList.contains('is-visible');
 
 		if (!isVisible) {
 			return;
@@ -137,11 +137,11 @@ export class FilePathSuggest {
 	}
 
 	private showSuggestions() {
-		this.suggestionsEl.style.display = 'block';
+		this.suggestionsEl.classList.add('is-visible');
 	}
 
 	private hideSuggestions() {
-		this.suggestionsEl.style.display = 'none';
+		this.suggestionsEl.classList.remove('is-visible');
 		this.selectedIndex = 0;
 	}
 }

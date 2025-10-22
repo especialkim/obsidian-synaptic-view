@@ -1,8 +1,10 @@
 import { App, TFile, Component, WorkspaceLeaf, MarkdownView } from 'obsidian';
 import { SynapticViewSettings } from '../settings';
 import { SynapticView } from './synapticView';
+import { DailyNoteBadgeManager } from '../ui/dailyNoteBadge';
 import { openPluginSettings } from '../utils/openSettings';
 import { getJournalNotePath } from '../utils/pluginChecker';
+import { t } from '../utils/i18n';
 
 /**
  * New Tab을 Synaptic View로 대체하는 기능을 담당
@@ -13,10 +15,13 @@ export class EmptyStateViewManager {
 	private settings: SynapticViewSettings;
 	private synapticViews: Map<WorkspaceLeaf, SynapticView> = new Map();
 	private component: Component;
+	private lastActiveLeaf: WorkspaceLeaf | null = null;
+	private dailyNoteBadgeManager: DailyNoteBadgeManager;
 
-	constructor(app: App, settings: SynapticViewSettings) {
+	constructor(app: App, settings: SynapticViewSettings, dailyNoteBadgeManager: DailyNoteBadgeManager) {
 		this.app = app;
 		this.settings = settings;
+		this.dailyNoteBadgeManager = dailyNoteBadgeManager;
 		this.component = new Component();
 		this.component.load();
 		
@@ -64,7 +69,7 @@ export class EmptyStateViewManager {
 			const defaultFile = enabledFiles[defaultIndex - 1];
 			
 			// Synaptic View 초기화 (defaultFile을 초기 파일로 전달)
-			const synapticView = new SynapticView(this.app, this.settings);
+			const synapticView = new SynapticView(this.app, this.settings, this.dailyNoteBadgeManager);
 			this.synapticViews.set(leaf, synapticView);
 			await synapticView.initializeSynapticView(leaf, defaultFile);
 		}
@@ -80,6 +85,15 @@ export class EmptyStateViewManager {
 		// 활성화된 leaf 확인
 		const activeLeaf = this.app.workspace.activeLeaf;
 		if (!activeLeaf) return;
+		
+		// 탭 전환 감지: 이전 active leaf와 현재 active leaf가 다르면 탭 전환
+		const isTabSwitch = this.lastActiveLeaf !== null && this.lastActiveLeaf !== activeLeaf;
+		this.lastActiveLeaf = activeLeaf;
+		
+		// 탭 전환인 경우 Synaptic View 속성 유지
+		if (isTabSwitch) {
+			return;
+		}
 		
 		const container = activeLeaf.view.containerEl;
 		if (!container) return;
@@ -124,22 +138,23 @@ export class EmptyStateViewManager {
 	}
 
 	private showSetupMessage(container: HTMLElement) {
+		const translations = t();
 		container.empty();
 		const contentDiv = container.createDiv({ cls: 'synaptic-setup-message' });
 		
-		contentDiv.createEl('h2', { text: '🎯 Synaptic View' });
+		contentDiv.createEl('h2', { text: translations.settings.setup.title });
 		contentDiv.createEl('p', { 
-			text: 'No Quick Access items configured.',
+			text: translations.settings.setup.noItems,
 			cls: 'synaptic-setup-text'
 		});
 		contentDiv.createEl('p', { 
-			text: 'Add items in settings to get started.',
+			text: translations.settings.setup.addItems,
 			cls: 'synaptic-setup-text'
 		});
 		
 		const buttonDiv = contentDiv.createDiv({ cls: 'synaptic-setup-button-container' });
 		const settingsButton = buttonDiv.createEl('button', { 
-			text: '⚙️ Open Settings',
+			text: translations.settings.setup.openSettings,
 			cls: 'mod-cta synaptic-setup-button'
 		});
 		
@@ -210,22 +225,32 @@ export class EmptyStateViewManager {
 		// 탭 헤더의 synaptic-view-tab 클래스도 정리
 		const synapticTabHeaders = document.querySelectorAll('.workspace-tab-header.synaptic-view-tab');
 		
-		synapticTabHeaders.forEach(tabHeader => {
+		console.log('[Synaptic View] cleanupNonSynapticTabs - checking tab headers:', synapticTabHeaders.length);
+		
+		synapticTabHeaders.forEach((tabHeader, index) => {
 			const tabEl = tabHeader as HTMLElement;
+			
+			// data-synaptic-icon attribute가 있으면 Synaptic View 탭으로 유지
+			const hasSynapticIcon = tabEl.getAttribute('data-synaptic-icon');
+			
+			// 타이틀이 "Synaptic View"인지 확인
+			const titleEl = tabEl.querySelector('.workspace-tab-header-inner-title');
+			const title = titleEl?.textContent || '';
+			const isSynapticViewTitle = title === 'Synaptic View';
+			
 			const ariaLabel = tabEl.getAttribute('aria-label') || '';
 			
-			// Quick Access 파일명 목록
-			const quickAccessFileNames = this.settings.quickAccessFiles
-				.filter(f => f.enabled)
-				.map(f => {
-					const fileName = f.filePath.split('/').pop() || f.filePath;
-					return fileName.replace('.md', '');
-				});
+			console.log(`[Synaptic View] Tab ${index} cleanup check:`, {
+				ariaLabel,
+				title,
+				hasSynapticIcon,
+				isSynapticViewTitle,
+				willKeep: !!(hasSynapticIcon || isSynapticViewTitle)
+			});
 			
-			const isQuickAccessFile = ariaLabel === 'Synaptic View' || 
-				quickAccessFileNames.includes(ariaLabel);
-			
-			if (!isQuickAccessFile) {
+			// data-synaptic-icon이 있거나 타이틀이 "Synaptic View"면 유지
+			if (!hasSynapticIcon && !isSynapticViewTitle) {
+				console.log(`[Synaptic View] Removing synaptic-view-tab from tab ${index}`);
 				tabHeader.removeClass('synaptic-view-tab');
 			}
 		});
