@@ -19,7 +19,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 	 */
 	private getJournalIcon(granularity?: JournalGranularity): string {
 		const iconMap: Record<JournalGranularity, string> = {
-			'all': 'calendar-fold',
+			'all': 'lucide-calendar-fold',
 			'day': 'calendar-day',
 			'week': 'calendar-week',
 			'month': 'calendar-month',
