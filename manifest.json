@@ -3,7 +3,7 @@
 	"name": "Synaptic View",
 	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "Turn the empty new tab into a Synaptic View that unifies your dashboards, hub notes, quick-entry notes, periodic notes, web shortcuts, and calendar navigation—enable it as the default new-tab experience or summon it with a command.",
+	"description": "Don't build a homepage. Configure your Synaptic View. Unify project hubs, daily notes, task boards, periodic notes, and web resources into a dynamic control center. No more Dataview queries or maintenance—just intuitive buttons that connect you to what matters. Replace new tab with Synaptic View.",
 	"author": "Yongmini",
 	"authorUrl": "https://x.com/Facilitate4U",
 	"isDesktopOnly": true

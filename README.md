@@ -2,35 +2,39 @@
 
 **English** | [한국어](README_KO.md)
 
-**Unify your project hubs, daily notes, task boards, periodic notes, and web resources into a single view.**
+**Don't build a homepage. Configure your Synaptic View.**
 
 ---
 
-## Sound Familiar?
+## Stop Building. Start Configuring.
 
-As your vault grows:
-- You've created daily notes, project hubs, and task boards, but opening them requires **searching, clicking, and switching** over and over
-- Important notes are scattered deep in your vault, making it hard to **access them when you need them**
-- Today's tasks are in your daily note, but you have to **search through calendars or search bars** every time
-- Even with bookmarks, you still need to **open the sidebar and scroll** through them
+You've spent hours crafting the perfect homepage note:
+- Complex **Dataview queries** that break when your vault structure changes
+- Dozens of **internal links** that need constant maintenance
+- Endless **scrolling** through a static document to find what you need
+- **CSS snippets** and workarounds just to make it look decent
+
+**The problem?** You're stuck in maintenance mode, not creative mode.
 
 ---
 
-## Synaptic View Solves This
+## Synaptic View Changes the Game
 
-**Synaptic View** transforms your vault into a **unified control center**.
+**Stop maintaining a document. Start configuring an interface.**
 
-When you open Synaptic View:
-- Large, accessible buttons at the top let you **jump anywhere you need instantly**
-- Manage daily notes, project hubs, task lists, and web resources **all in one place**
-- Navigate freely through past and future notes with a **calendar UI**
-- See the **number of tasks for today** in real-time
+Synaptic View isn't a note—it's a **dynamic control center** that lives at your fingertips:
+- **No coding required**: Pick icons, choose files, toggle buttons on—done in minutes
+- **No maintenance**: Your vault structure changes? Your buttons still work
+- **No scrolling**: Every destination is one click away, always visible
+- **Real-time updates**: See today's tasks without opening notes
+
+**It's not about displaying information. It's about connecting to it instantly.**
 
 **How to use**:
 - Open it anytime via command palette: `Open Synaptic View tab`
-- Or **replace new tabs with Synaptic View** for constant access
+- Or replace new tabs with Synaptic View for constant access
 
-Fast and natural connections, like synapses. Now you can **truly control** your "second brain".
+From janitor to pilot. From static document to living interface. **Configure once, flow forever.**
 
 ---
 

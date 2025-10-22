@@ -2,7 +2,9 @@
 
 ## 0.1.0 (Initial Release)
 
-**Synaptic View** - A unified control center that brings together your project hubs, daily notes, task boards, periodic notes, and web resources into a single, accessible view.
+**Synaptic View** - Don't build a homepage. Configure your Synaptic View.
+
+A dynamic control center that unifies your project hubs, daily notes, task boards, periodic notes, and web resources. No Dataview queries, no maintenance—just intuitive buttons that connect you to what matters.
 
 ### Features
 
