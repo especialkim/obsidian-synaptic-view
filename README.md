@@ -138,7 +138,7 @@ Run `Add current file to Quick Access` from the command palette:
 
 ### Manual Installation
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/your-name/obsidian-synaptic-view/releases)
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/especialkim/obsidian-synaptic-view/releases)
 2. Copy files to `<Vault>/.obsidian/plugins/obsidian-synaptic-view/`
 3. Restart Obsidian and enable **Synaptic View** in **Settings → Community plugins**
 

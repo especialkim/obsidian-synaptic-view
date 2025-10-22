@@ -138,7 +138,7 @@ Quick Access 버튼은 **두 가지 방식으로 클릭**할 수 있습니다:
 
 ### 수동 설치
 
-1. [최신 릴리스](https://github.com/your-name/obsidian-synaptic-view/releases)에서 `main.js`, `manifest.json`, `styles.css`를 다운로드합니다
+1. [최신 릴리스](https://github.com/especialkim/obsidian-synaptic-view/releases)에서 `main.js`, `manifest.json`, `styles.css`를 다운로드합니다
 2. 볼트 경로 `<Vault>/.obsidian/plugins/obsidian-synaptic-view/`에 파일을 복사합니다
 3. Obsidian을 재시작하고 **Settings → Community plugins**에서 **Synaptic View**를 활성화합니다
 
