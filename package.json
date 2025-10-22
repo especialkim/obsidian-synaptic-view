@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-synaptic-view",
+	"name": "synaptic-view",
 	"version": "0.1.0",
 	"description": "Don't build a homepage. Configure your Synaptic View. Unify project hubs, daily notes, task boards, periodic notes, and web resources into a dynamic control center. No more Dataview queries or maintenance—just intuitive buttons that connect you to what matters. Replace new tab with Synaptic View.",
 	"main": "main.js",
