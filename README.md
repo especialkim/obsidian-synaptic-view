@@ -1,128 +1,283 @@
 # Synaptic View for Obsidian
 
-**Obsidian의 새 탭을 열 때마다 지금 당장 필요한 노트와 연결해 주는, 살아 있는 대시보드.**
+**English** | [한국어](README_KO.md)
+
+**Unify your project hubs, daily notes, task boards, periodic notes, and web resources into a single view.**
 
 ---
 
-## 왜 Synaptic View인가?
+## Sound Familiar?
 
-커스텀 대시보드나 허브 노트를 여러 개 만들어 놓아도, 실제로 그 노트들을 열기까지는 몇 번의 클릭과 의식적인 전환이 필요합니다. Obsidian의 텅 빈 새 탭은 시작점이 아니라 멈칫하는 공간이 되고, 애써 정리한 관점들은 제대로 활용되지 못합니다.
-
-Synaptic View는 그 공백을 상황을 인지하는 컨트롤 패널로 바꿔 줍니다. 새로운 탭이 열리는 순간, 일기·주간 리뷰·프로젝트 허브·외부 링크 등 원하는 항목으로 즉시 이동하는 큼직한 버튼들이 시야에 들어옵니다. 두 번째 뇌처럼 커져 버린 볼트를 가진 사용자에게, 시냅스가 연결되듯 빠르고 목적 있게 흐름을 되살리는 경험을 제공합니다.
-
----
-
-## 주요 기능
-
-- **새 탭 대시보드**  
-  새 탭이 열릴 때 Obsidian의 기본 빈 화면 대신 Synaptic View를 표시하도록 설정할 수 있습니다.
-
-- **플로팅 퀵 액세스 바**  
-  화면 상단의 고정된 액션 바에서 다음과 같은 버튼을 즉시 사용할 수 있습니다.
-  - 새 노트 만들기
-  - 퀵 스위처 열기
-  - 플러그인 설정으로 이동
-  - 설정한 Quick Access 항목 열기
-
-- **다양한 타입의 Quick Access 항목**  
-  각 버튼이 어떤 방식으로 동작할지 선택할 수 있습니다.
-  - `File`: 특정 문서나 캔버스를 바로 열기
-  - `Web`: 탭 내에서 웹 페이지 열기
-  - `Journal`: Periodic Notes/Daily Notes와 연동하여 일/주/월/분기/연 노트를 열기 (없으면 자동 생성)
-  - `Calendar`: 미니 캘린더에서 날짜를 선택해 관련 노트 열기
-
-- **Journal & Calendar 서브메뉴**  
-  Journal의 “All” 버튼에 마우스를 올리면 시간 단위를 즉시 선택할 수 있고, 캘린더 서브메뉴로 특정 날짜·주·월 노트에 바로 접근할 수 있습니다.
-
-- **미리보기 전용 UI 스타일**  
-  대시보드처럼 보이도록 인라인 타이틀과 임베디드 멘션을 숨길 수 있는 옵션을 제공합니다.
-
-- **친숙한 설정 도구**  
-  - 드래그 앤 드롭으로 순서 조정, 켜기/끄기 토글, 기본 뷰 선택
-  - 파일 경로 자동완성
-  - 최근 사용 기록이 남는 Lucide 아이콘 선택기
-
-- **커맨드 팔레트 지원**  
-  “Open Synaptic View tab” 커맨드를 실행해 원하는 순간에 대시보드를 열 수 있습니다.
+As your vault grows:
+- You've created daily notes, project hubs, and task boards, but opening them requires **searching, clicking, and switching** over and over
+- Important notes are scattered deep in your vault, making it hard to **access them when you need them**
+- Today's tasks are in your daily note, but you have to **search through calendars or search bars** every time
+- Even with bookmarks, you still need to **open the sidebar and scroll** through them
 
 ---
 
-## 앞으로의 로드맵
+## Synaptic View Solves This
 
-현재는 한 가지 핵심 경험에 집중하고 있으며, 다음과 같은 확장을 계획하고 있습니다.
+**Synaptic View** transforms your vault into a **unified control center**.
 
-1. 시간대별 기본 뷰 (예: 오전엔 작업 보드, 저녁엔 Daily Note)  
-2. 상황 기반 트리거 (특정 워크플로에서 프로젝트 대시보드 자동 전환)  
-3. 생태계 확장에 맞춘 추가 액션과 통합
+When you open Synaptic View:
+- Large, accessible buttons at the top let you **jump anywhere you need instantly**
+- Manage daily notes, project hubs, task lists, and web resources **all in one place**
+- Navigate freely through past and future notes with a **calendar UI**
+- See the **number of tasks for today** in real-time
 
-Synaptic View가 “두 번째 뇌의 제어 센터”가 되길 원하신다면, 사용 후기나 아이디어를 공유해 주세요. 실제 사용 흐름이 다음 버전을 결정합니다.
+**How to use**:
+- Open it anytime via command palette: `Open Synaptic View tab`
+- Or **replace new tabs with Synaptic View** for constant access
 
----
-
-## 설치 방법
-
-### 소스에서 직접 설치
-
-```bash
-git clone https://github.com/your-name/obsidian-synaptic-view.git
-cd obsidian-synaptic-view
-npm install
-npm run build
-```
-
-빌드 후 생성된 `main.js`, `manifest.json`, `styles.css`를 다음 경로에 복사합니다.
-
-```
-<Vault>/.obsidian/plugins/obsidian-synaptic-view/
-```
-
-Obsidian을 다시 로드한 뒤 **Community plugins**를 활성화하고 **Synaptic View**를 켜 주세요.
-
-### 수동 설치
-
-1. 최신 릴리스에서 `main.js`, `manifest.json`, `styles.css`를 다운로드합니다.  
-2. `<Vault>/.obsidian/plugins/obsidian-synaptic-view/` 폴더에 파일을 복사합니다.  
-3. Obsidian을 다시 로드한 뒤 플러그인을 활성화합니다.
-
-> **호환성**: Obsidian v0.15.0 이상을 요구하며, 현재는 데스크톱 환경에서 동작합니다 (`isDesktopOnly: true`).
+Fast and natural connections, like synapses. Now you can **truly control** your "second brain".
 
 ---
 
-## 시작 가이드
+## Core Features
 
-1. **Settings → Community plugins → Synaptic View** 메뉴를 엽니다.  
-2. 필요하면 **Replace New Tab with Synaptic View** 토글을 켜세요.  
-3. Quick Access 항목을 추가합니다.
-   - 유형(File, Web, Journal, Calendar)을 선택합니다.
-   - 파일 경로나 Journal의 granularity를 설정합니다.
-   - 아이콘을 선택하거나, Journal이라면 자동 설정에 맡깁니다.
-   - 항목을 켜거나 끄고, 순서를 바꾸고, 기본으로 열릴 항목을 지정합니다.
-4. 미리보기 모드에서의 스타일 옵션을 원하는 대로 조정합니다.  
-5. 새 탭을 열거나 “Open Synaptic View tab” 커맨드를 실행해 결과를 확인합니다.
+### 1. Unified Dashboard with Instant Access
 
-활용 팁:
-- Quick Access 버튼 위에 마우스를 올린 상태에서 <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>을 누르면 “편집 모드”로 전환되어 소스 뷰를 바로 열 수 있습니다.
-- Journal과 Calendar 서브메뉴로 대시보드를 떠나지 않고도 시간 축을 자유롭게 이동할 수 있습니다.
+Synaptic View can be opened in two ways:
+- **Via Command**: Run `Open Synaptic View tab` from the command palette (`Ctrl`+`P`)
+- **Replace New Tab (Optional)**: Enable **Replace New Tab with Synaptic View** in settings to automatically show Synaptic View whenever you open a new tab
+
+### 2. Quick Access: 4 Types of Smart Buttons
+
+The left side of the action bar always shows **3 default buttons**:
+- **➕ New File**: Create a new markdown file and start editing immediately
+- **🔍 Search Files**: Open Quick Switcher to find files quickly
+- **⚙️ Settings**: Navigate to Synaptic View settings
+
+Your custom **Quick Access buttons** appear to the right. Choose from 4 types:
+
+| Type | Action | When to Use? |
+|------|--------|--------------|
+| 📄 **File** | Open a specific note or canvas | Frequently accessed documents like project hubs, task boards, reading notes |
+| 🌐 **Web** | Open a webpage inside Obsidian | Notion, Google Docs, reference sites (some sites may be restricted) |
+| 📅 **Journal** | Open today's/this week's/this month's periodic note | Daily notes, weekly reviews, monthly reflections (auto-creates if missing) |
+| 🗓️ **Calendar** | Browse past/future notes via mini calendar | Quickly find notes by date, navigate weekly/monthly notes |
+
+#### 📅 Journal Type Details
+
+Choose your time granularity:
+- **Day**: Today's daily note
+- **Week**: This week's weekly note
+- **Month**: This month's monthly note
+- **Quarter**: Current quarter note
+- **Year**: This year's yearly note
+- **All**: Hovering over the button reveals a **submenu** to select any time granularity
+
+> 💡 **Required**: Core Daily Notes or Periodic Notes plugin must be configured.
+
+#### 🗓️ Calendar Type Details
+
+- **Click button**: Opens today's daily note directly
+- **Hover over button**: Mini calendar appears
+  - Click a date → Open that day's daily note
+  - Click **W** (week number) → Open weekly note
+  - Click **MMM** (month) → Open monthly note
+  - Click **YYYY** (year) → Open yearly note
+  - Click **1Q~4Q** buttons → Open quarterly notes
+
+> 💡 UI automatically adjusts based on your Periodic Notes settings (e.g., hides W column if weekly notes are disabled)
+
+### 3. Today's Tasks at a Glance: Daily Note Task Badge
+
+Journal(Daily) or Calendar buttons display **incomplete task counts** in real-time:
+- 🔴 **Red badge + number**: Remaining tasks count
+- ✅ **Green checkmark**: All tasks completed!
+
+See what needs to be done today **just by looking at the button**, without opening your daily note.
+
+### 4. Quick Edit Mode Toggle
+
+Quick Access buttons support **two click modes**:
+
+- **Regular click**: Opens file in preview mode in the current tab
+- **<kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + Click**: Keeps current tab and opens file in **edit mode (source view)** in a split pane on the right
+
+Hover over an active button while holding <kbd>Cmd</kbd> (macOS) or <kbd>Ctrl</kbd> (Windows/Linux):
+- Button icon changes to a **pencil** to indicate editing is available
+- Click to **read and write simultaneously**
+
+> 💡 Works with File, Journal, and Calendar types only.
+
+### 5. Style Options
+
+Keep your dashboard clean:
+- **Hide inline title**: Hides note titles in preview mode
+- **Hide embedded mentions**: Hides decorative link elements
+
+### 6. Intuitive Settings UI
+
+- **Reorder buttons**: Use up/down arrows or drag-and-drop
+- **Toggle visibility**: Control which buttons appear
+- **Set default view**: Choose which item opens first when Synaptic View launches
+- **File path autocomplete**: Type to get vault file suggestions
+- **Lucide icon picker**: Search icons (recently used icons appear at the top)
+
+### 7. Add Current File to Quick Access Instantly
+
+Run `Add current file to Quick Access` from the command palette:
+- The file you're currently viewing is **automatically added to Quick Access**
+- Convenient **quick bookmarking** without opening settings
+
+### 8. Multilingual Support (i18n)
+
+- Supports English and Korean
+- **Automatically switches** based on your Obsidian language settings
 
 ---
 
-## 개발 환경
+## Installation
 
-```bash
-npm install
-npm run dev   # 변경 사항을 감지하며 빌드
-npm run build # 배포용 번들 생성
-```
+### Community Plugin (Recommended)
 
-이 프로젝트는 TypeScript로 작성하고 esbuild로 번들링합니다. 소스 코드는 `src/`에 위치하며, 릴리스에 포함할 `main.js`는 루트 경로에 출력됩니다.
+*(Instructions will be added once submitted to the community plugin list)*
+
+### Manual Installation
+
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/your-name/obsidian-synaptic-view/releases)
+2. Copy files to `<Vault>/.obsidian/plugins/obsidian-synaptic-view/`
+3. Restart Obsidian and enable **Synaptic View** in **Settings → Community plugins**
+
+> **Compatibility**: Requires Obsidian v0.15.0 or higher. Currently desktop-only.
 
 ---
 
-## 지원 및 문의
+## Quick Start Guide
 
-이 플러그인은 **Yongmini**가 만들었습니다. 업데이트나 의견, 협업 제안을 원하신다면:
+### Step 1: Open Plugin Settings
 
-- Author: [@Facilitate4U on X](https://x.com/Facilitate4U)
-- Plugin ID: `obsidian-synaptic-view`
+Navigate to **Settings → Community plugins → Synaptic View**.
 
-Synaptic View가 여러분의 작업 흐름에 도움이 되었다면, 사용기를 공유하거나 주변에 알려 주세요. 다른 볼트가 어떻게 빛나는지 듣는 것이 다음 발전의 가장 큰 동력이 됩니다.
+### Step 2: Choose How to Open Synaptic View (Optional)
+
+You can choose between two approaches:
+- **Via Command**: Run `Open Synaptic View tab` from command palette (default)
+- **Auto Display**: Enable **Replace New Tab with Synaptic View** to automatically show Synaptic View whenever you click the **+** button for a new tab
+
+### Step 3: Add Quick Access Items
+
+Click **"Add New Quick Access"** button:
+
+1. **Select Type**: Choose File, Web, Journal, or Calendar
+2. **Configure Details**:
+   - **File**: Enter file path (autocomplete suggestions appear as you type)
+   - **Web**: Enter URL (e.g., `https://notion.so`)
+   - **Journal**: Select time granularity (Day, Week, Month, Quarter, Year, All)
+   - **Calendar**: Ready to use without configuration
+3. **Choose Icon**: Search Lucide icon library (recently used icons appear at top)
+4. **Reorder**: Use up/down arrows or drag-and-drop to adjust order
+5. **Enable**: New items are **disabled by default** – toggle them on to display as buttons
+
+> ⚠️ **Important**: After adding an item, **don't forget to enable the toggle!** Disabled items won't appear as buttons.
+
+### Step 4: Set Default View (Optional)
+
+In the **Default View** dropdown, select which item should display first when Synaptic View opens.
+
+### Step 5: Configure Additional Options
+
+- **View Style Options**: Choose whether to hide inline titles and embedded mentions
+- **Daily Note Task Badge**: Choose whether to display today's task count on buttons
+
+### Step 6: Start Using!
+
+- Run `Open Synaptic View tab` from command palette (`Ctrl`+`P`), or
+- If you enabled new tab replacement, click the **+** button in the tab bar
+
+---
+
+## Usage Tips
+
+### 🎯 Save Space with Journal "All" Button
+
+Instead of creating multiple time-granularity buttons, we recommend **a single "All" button**:
+- Hovering over it reveals a **submenu** to instantly select Day/Week/Month/Quarter/Year
+- Save button space while maintaining quick access to all periodic notes
+
+### 📆 Using the Calendar Button
+
+- **Quickly open today's note**: Just click the button
+- **Find past/future notes**: Hover to open calendar and click a date
+- **Weekly review**: Click **W (week number)** on the left to open that week's note
+- **Monthly/yearly reflection**: Click **MMM (month)** or **YYYY (year)** at the top
+- **Quarterly planning**: Click **1Q~4Q** buttons at the top of calendar for instant quarterly note access
+
+### ✏️ Read and Write Simultaneously
+
+Hold <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> and click a button:
+- Preview on the left, edit mode on the right, side by side
+- Useful when writing while referencing, or checking edits in real-time
+
+### 🔢 Today's Tasks at a Glance
+
+Enable Daily Note Task Badge (**Settings → Daily Note task badge**):
+- Journal(Daily) or Calendar buttons display remaining tasks as a **red number**
+- When all complete, it changes to a **green checkmark (✓)** for a sense of achievement
+- **Updates in real-time** when you save your daily note
+
+### ⚡ Quick Add from Current File
+
+When viewing a file and thinking "I want this in Quick Access too!":
+- Command palette (`Ctrl`+`P`) → `Add current file to Quick Access`
+- **Instantly added** without navigating to settings
+
+### 🎨 Build Your Own Workflow
+
+- **By project**: Combine project hub + related task board + web references
+- **By routine**: Prioritize Daily Note button in the morning, Weekly Review on weekends
+- **By purpose**: Group File buttons for reading, Web buttons for learning
+
+### 💡 Item Not Showing?
+
+- Added to Quick Access but button isn't visible? → **Toggle might be off**
+- Check settings and **enable the Enabled toggle** for that item
+- Newly added items are disabled by default
+
+---
+
+## FAQ
+
+### Q. Can I use this without Periodic Notes?
+
+A. **Daily Notes Core Plugin** alone is enough for Journal type Day granularity. Week, Month, Quarter, and Year require the **Periodic Notes plugin**.
+
+### Q. Weekly/quarterly/yearly notes aren't showing in Calendar.
+
+A. You must **enable** those time granularities in your Periodic Notes plugin settings. Synaptic View automatically adjusts the UI based on your configuration.
+
+### Q. Daily Note Task Badge isn't updating.
+
+A. Check that the **Show Daily Note task badge** option is enabled in settings. It updates in real-time when you save your daily note.
+
+### Q. Webpages aren't opening with Web type.
+
+A. Some websites (e.g., Google, YouTube) block iframe embedding. These cannot be opened inside Obsidian.
+
+---
+
+## Roadmap
+
+Planned features:
+
+- **Time-based auto view switching**: Task board in the morning, daily note in the evening, etc.
+- **Group type**: Bundle Quick Access items into groups
+- **Smart type**: Automatically display recently modified or frequently viewed notes
+- **Multi Synaptic View**: Create and switch between different view sets per project
+- **Keyboard shortcuts**: Quick access to buttons via number keys
+
+---
+
+## Support
+
+This plugin was created by **Yongmini**.
+
+- **Author**: [@Facilitate4U on X](https://x.com/Facilitate4U)
+- **Plugin ID**: `obsidian-synaptic-view`
+
+Bug reports, feature suggestions, and user feedback are always welcome!
+
+We hope Synaptic View makes your second brain even more powerful. 🧠✨
