@@ -285,3 +285,9 @@ This plugin was created by **Yongmini**.
 Bug reports, feature suggestions, and user feedback are always welcome!
 
 We hope Synaptic View makes your second brain even more powerful. 🧠✨
+
+---
+
+## Acknowledgements
+
+Calendar icons used in this plugin are adapted from the [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes) plugin by [Liam Cain](https://github.com/liamcain), licensed under MIT License.

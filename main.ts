@@ -1,9 +1,17 @@
-import { Plugin, setIcon } from 'obsidian';
+import { Plugin, setIcon, addIcon } from 'obsidian';
 import { SynapticViewSettings, DEFAULT_SETTINGS } from './src/settings';
 import { SynapticViewSettingTab } from './src/settingsTab';
 import { EmptyStateViewManager } from './src/views/emptyStateView';
 import { DailyNoteBadgeManager } from './src/ui/dailyNoteBadge';
 import { registerCommands } from './src/commands';
+import {
+	calendarDayIcon,
+	calendarWeekIcon,
+	calendarMonthIcon,
+	calendarQuarterIcon,
+	calendarYearIcon,
+	calendarFoldIcon
+} from './src/icons/calendarIcons';
 
 export default class SynapticViewPlugin extends Plugin {
 	settings: SynapticViewSettings;
@@ -11,6 +19,14 @@ export default class SynapticViewPlugin extends Plugin {
 	public dailyNoteBadgeManager: DailyNoteBadgeManager;
 
 	async onload() {
+		// Register custom calendar icons
+		addIcon('calendar-day', calendarDayIcon);
+		addIcon('calendar-week', calendarWeekIcon);
+		addIcon('calendar-month', calendarMonthIcon);
+		addIcon('calendar-quarter', calendarQuarterIcon);
+		addIcon('calendar-year', calendarYearIcon);
+		addIcon('calendar-fold', calendarFoldIcon);
+
 		await this.loadSettings();
 
 		// Daily Note Badge Manager initialization

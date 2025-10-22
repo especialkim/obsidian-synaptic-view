@@ -285,3 +285,9 @@ A. 일부 웹사이트(예: Google, YouTube)는 iframe 삽입을 차단합니다
 버그 리포트, 기능 제안, 사용 후기는 언제나 환영입니다!
 
 Synaptic View가 여러분의 두 번째 뇌를 더 강력하게 만들어 주길 바랍니다. 🧠✨
+
+---
+
+## 감사의 말
+
+이 플러그인에서 사용된 캘린더 아이콘은 [Liam Cain](https://github.com/liamcain)의 [Periodic Notes](https://github.com/liamcain/obsidian-periodic-notes) 플러그인에서 가져왔으며, MIT 라이센스를 따릅니다.
