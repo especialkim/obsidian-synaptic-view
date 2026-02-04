@@ -86,7 +86,12 @@ export class SynapticView {
 		// view-content 내부에 버튼 추가 (일관성 유지)
 		const viewContent = container.querySelector('.view-content');
 		const targetContainer = viewContent || container;
-		
+
+		// 이전 FloatingButtonManager 정리
+		if (this.floatingButtonManager) {
+			this.floatingButtonManager.destroy();
+		}
+
 		this.floatingButtonManager = new FloatingButtonManager(
 			this.app,
 			this.settings,
@@ -317,13 +322,18 @@ export class SynapticView {
 			const viewContent = container.querySelector('.view-content');
 			if (viewContent) {
 				// 이전 FloatingButtonManager의 currentActiveButtonId 보존 (Journal all, Calendar 등에서 설정한 활성 상태 유지)
-				const previousActiveButtonId = activeButtonId !== null 
-					? activeButtonId 
+				const previousActiveButtonId = activeButtonId !== null
+					? activeButtonId
 					: (this.floatingButtonManager?.currentActiveButtonId || null);
-				
+
 				// filePath가 빈 문자열이면 현재 filePath 유지
 				const actualFilePath = filePath || this.currentFilePath || null;
-				
+
+				// 이전 FloatingButtonManager 정리
+				if (this.floatingButtonManager) {
+					this.floatingButtonManager.destroy();
+				}
+
 				this.floatingButtonManager = new FloatingButtonManager(
 					this.app,
 					this.settings,
@@ -349,6 +359,16 @@ export class SynapticView {
 	 */
 	getCurrentFilePath(): string | null {
 		return this.currentFilePath;
+	}
+
+	/**
+	 * 리소스 정리 (플러그인 unload 시 호출)
+	 */
+	destroy() {
+		if (this.floatingButtonManager) {
+			this.floatingButtonManager.destroy();
+			this.floatingButtonManager = null;
+		}
 	}
 }
 

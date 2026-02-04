@@ -84,43 +84,10 @@
 	font-size: var(--font-ui-small);
 }
 
-.synaptic-file-suggestions {
-	position: absolute;
-	top: 100%;
-	left: 0;
-	right: 0;
-	margin-top: 4px;
-	/* border: 1px solid var(--background-modifier-border); */
-	border-radius: 4px;
-	background-color: var(--background-primary);
-	max-height: 300px;
-	overflow-y: auto;
-	z-index: 1000;
-	box-shadow: var(--shadow-s);
-}
-
-.synaptic-file-suggestions .suggestion-item {
-	padding: 8px 12px;
-	border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.synaptic-file-suggestions .suggestion-item:last-child {
-	border-bottom: none;
-}
-
-.synaptic-file-suggestions .suggestion-item:hover {
-	background-color: var(--background-modifier-hover);
-}
-
-.synaptic-file-suggestions .suggestion-item.is-selected {
-	background-color: var(--background-modifier-hover);
-	color: var(--text-accent);
-	font-weight: 500;
-}
-
 /* 액션 버튼 스타일 - 상단 오른쪽 */
 /* .view-content 내부에 배치되는 플로팅 버튼 */
-.view-content {
+/* 플러그인 컨테이너 내부에서만 position 적용 (코어 스타일 오버라이드 방지) */
+.synaptic-viewer-container .view-content {
 	position: relative; /* 버튼의 absolute 위치 기준점 */
 }
 
@@ -926,11 +893,3 @@
 	cursor: not-allowed;
 }
 
-/* Suggestions visibility */
-.synaptic-suggestions {
-	display: none;
-}
-
-.synaptic-suggestions.is-visible {
-	display: block;
-}

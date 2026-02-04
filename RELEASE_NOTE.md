@@ -1,5 +1,32 @@
 # Release Notes
 
+## 0.1.1
+
+Community plugin submission compliance and bug fixes.
+
+### Fixes
+
+- **Memory leak prevention**: Proper event listener cleanup on plugin unload
+- **API compliance**: Use `getLanguage()` API instead of `moment.locale()` for locale detection
+- **Conditional command**: "Add current file to Quick Access" command now properly checks for active file
+- **Path normalization**: User-defined file paths now use `normalizePath()` for cross-platform compatibility
+- **Core style protection**: Plugin styles no longer override Obsidian core `.view-content` styles
+
+### Improvements
+
+- **Settings UI**: Section headings now use proper `Setting.setHeading()` pattern
+- **Sentence case**: All UI text follows Obsidian's sentence case convention
+- **File picker**: Now uses Obsidian's `AbstractInputSuggest` for better UX
+- **Min app version**: Updated to 1.8.0 for `getLanguage()` API support
+
+### Technical
+
+- Added `destroy()` method chain: `main.ts` → `EmptyStateViewManager` → `SynapticView` → `FloatingButtonManager`
+- Fixed `versions.json` to match `manifest.json`
+- Copyright year updated to 2026
+
+---
+
 ## 0.1.0 (Initial Release)
 
 **Synaptic View** - Don't build a homepage. Configure your Synaptic View.
@@ -25,7 +52,7 @@ A dynamic control center that unifies your project hubs, daily notes, task board
 - esbuild-based bundling
 - Metadata cache integration for performance
 - Responsive CSS with theme compatibility
-- Desktop-only (requires Obsidian v0.15.0+)
+- Desktop-only (requires Obsidian v1.8.0+)
 
 ---
 

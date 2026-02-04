@@ -28,6 +28,11 @@ export class FloatingButtonManager {
     private journalSubmenu: JournalSubmenu;
 	private dailyNoteBadgeManager: DailyNoteBadgeManager;
 
+	// Event handlers stored for cleanup
+	private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+	private keyupHandler: ((e: KeyboardEvent) => void) | null = null;
+	private clickHandler: ((e: MouseEvent) => void) | null = null;
+
 	constructor(app: App, settings: SynapticViewSettings, onFileSelect: (quickAccessFile: QuickAccessFile) => void, dailyNoteBadgeManager: DailyNoteBadgeManager, currentFilePath: string | null = null, currentActiveButtonId: string | null = null) {
 		this.app = app;
 		this.settings = settings;
@@ -276,33 +281,56 @@ export class FloatingButtonManager {
 }
 
 	private setupKeyboardListeners() {
-		document.addEventListener('keydown', (e) => {
+		this.keydownHandler = (e: KeyboardEvent) => {
 			if (e.ctrlKey || e.metaKey) {
 				this.isModifierKeyPressed = true;
 				this.updateButtonsForEditMode();
 			}
-		});
+		};
 
-		document.addEventListener('keyup', (e) => {
+		this.keyupHandler = (e: KeyboardEvent) => {
 			if (!e.ctrlKey && !e.metaKey) {
 				this.isModifierKeyPressed = false;
 				this.updateButtonsForEditMode();
 			}
-		});
+		};
+
+		activeWindow.document.addEventListener('keydown', this.keydownHandler);
+		activeWindow.document.addEventListener('keyup', this.keyupHandler);
 	}
 
 	private setupOutsideClickListener() {
-		document.addEventListener('click', (e) => {
+		this.clickHandler = (e: MouseEvent) => {
 			// 서브메뉴나 All 버튼, Calendar 버튼 클릭이 아니면 서브메뉴 닫기
 			const target = e.target as HTMLElement;
-            if (!target.closest('.synaptic-journal-submenu') && 
+            if (!target.closest('.synaptic-journal-submenu') &&
                 !target.closest('.synaptic-calendar-submenu') &&
                 !target.closest('.synaptic-action-button[data-granularity="all"]') &&
                 !target.closest('.synaptic-action-button[data-file-type="calendar"]')) {
 				this.journalSubmenu.closeSubmenu();
                 this.calendarSubmenu.closeSubmenu();
             }
-		});
+		};
+
+		activeWindow.document.addEventListener('click', this.clickHandler);
+	}
+
+	/**
+	 * 이벤트 리스너 정리 (plugin unload 시 호출 필요)
+	 */
+	destroy() {
+		if (this.keydownHandler) {
+			activeWindow.document.removeEventListener('keydown', this.keydownHandler);
+			this.keydownHandler = null;
+		}
+		if (this.keyupHandler) {
+			activeWindow.document.removeEventListener('keyup', this.keyupHandler);
+			this.keyupHandler = null;
+		}
+		if (this.clickHandler) {
+			activeWindow.document.removeEventListener('click', this.clickHandler);
+			this.clickHandler = null;
+		}
 	}
 
 	private updateButtonsForEditMode() {

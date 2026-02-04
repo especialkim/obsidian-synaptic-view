@@ -16,12 +16,19 @@ export function registerCommands(plugin: SynapticViewPlugin) {
 		}
 	});
 
-	// 현재 파일을 Quick Access에 추가하는 커맨드
+	// 현재 파일을 Quick Access에 추가하는 커맨드 (활성 파일이 있을 때만 사용 가능)
 	plugin.addCommand({
 		id: 'add-current-file-to-quick-access',
 		name: 'Add current file to Quick Access',
-		callback: async () => {
-			await addCurrentFileToQuickAccess(plugin);
+		checkCallback: (checking: boolean) => {
+			const activeFile = plugin.app.workspace.getActiveFile();
+			if (activeFile) {
+				if (!checking) {
+					addCurrentFileToQuickAccess(plugin);
+				}
+				return true;
+			}
+			return false;
 		}
 	});
 }

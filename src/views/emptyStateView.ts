@@ -1,4 +1,4 @@
-import { App, TFile, Component, WorkspaceLeaf, MarkdownView } from 'obsidian';
+import { App, TFile, Plugin, WorkspaceLeaf, MarkdownView } from 'obsidian';
 import { SynapticViewSettings } from '../settings';
 import { SynapticView } from './synapticView';
 import { DailyNoteBadgeManager } from '../ui/dailyNoteBadge';
@@ -14,19 +14,17 @@ export class EmptyStateViewManager {
 	private app: App;
 	private settings: SynapticViewSettings;
 	private synapticViews: Map<WorkspaceLeaf, SynapticView> = new Map();
-	private component: Component;
 	private lastActiveLeaf: WorkspaceLeaf | null = null;
 	private dailyNoteBadgeManager: DailyNoteBadgeManager;
 
-	constructor(app: App, settings: SynapticViewSettings, dailyNoteBadgeManager: DailyNoteBadgeManager) {
+	constructor(app: App, settings: SynapticViewSettings, dailyNoteBadgeManager: DailyNoteBadgeManager, plugin: Plugin) {
 		this.app = app;
 		this.settings = settings;
 		this.dailyNoteBadgeManager = dailyNoteBadgeManager;
-		this.component = new Component();
-		this.component.load();
-		
+
 		// file-open 이벤트 감지: QuickAccess 외의 방법으로 파일을 열면 Synaptic View 속성 제거
-		this.component.registerEvent(
+		// plugin에 등록하여 plugin unload 시 자동 정리
+		plugin.registerEvent(
 			this.app.workspace.on('file-open', (file) => {
 				this.handleFileOpen(file);
 			})
@@ -254,5 +252,16 @@ export class EmptyStateViewManager {
 				tabHeader.removeClass('synaptic-view-tab');
 			}
 		});
+	}
+
+	/**
+	 * 리소스 정리 (플러그인 unload 시 호출)
+	 */
+	destroy() {
+		// 모든 SynapticView 인스턴스의 이벤트 리스너 정리
+		this.synapticViews.forEach((synapticView) => {
+			synapticView.destroy();
+		});
+		this.synapticViews.clear();
 	}
 }

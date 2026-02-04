@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, setIcon, DropdownComponent, Notice } from 'obsidian';
+import { App, PluginSettingTab, Setting, setIcon, DropdownComponent, Notice, normalizePath } from 'obsidian';
 import SynapticViewPlugin from '../main';
 import { QuickAccessFile, JournalGranularity } from './settings';
 import { IconPickerModal } from './ui/iconPickerModal';
@@ -37,9 +37,6 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		containerEl.empty();
 		containerEl.addClass('synaptic-view-settings');
 
-		// === Synaptic View Settings ===
-		containerEl.createEl('h3', { text: translations.settings.title });
-		
 		// Replace New Tab toggle
 		new Setting(containerEl)
 			.setName(translations.settings.replaceNewTab.name)
@@ -55,7 +52,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		// (Default view selection moved below Quick Access items per new structure)
 
 		// === Quick Access Items ===
-		containerEl.createEl('h3', { text: translations.settings.quickAccessItems });
+		new Setting(containerEl).setName(translations.settings.quickAccessItems).setHeading();
 		
 		// Item list container with background
 		const itemsContainer = containerEl.createDiv({ cls: 'synaptic-items-container' });
@@ -74,7 +71,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		// Default view selection (moved here)
 		const enabledFilesForDefault = this.plugin.settings.quickAccessFiles.filter(f => f.enabled);
 		if (enabledFilesForDefault.length > 0) {
-			containerEl.createEl('h3', { text: translations.settings.defaultView.title });
+			new Setting(containerEl).setName(translations.settings.defaultView.title).setHeading();
 			new Setting(containerEl)
 				.setName(translations.settings.defaultView.name)
 				.setDesc(translations.settings.defaultView.desc)
@@ -189,8 +186,8 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 
 	private renderViewStyleSettings(containerEl: HTMLElement) {
 		const translations = t();
-		
-		containerEl.createEl('h3', { text: translations.settings.viewStyle.title });
+
+		new Setting(containerEl).setName(translations.settings.viewStyle.title).setHeading();
 		
 		// Notice
 		const noticeEl = containerEl.createDiv({ cls: 'setting-item-description synaptic-settings-notice' });
@@ -221,7 +218,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 				}));
 		
 		// Misc Section
-		containerEl.createEl('h3', { text: translations.settings.misc?.title || 'Misc' });
+		new Setting(containerEl).setName(translations.settings.misc?.title || 'Misc').setHeading();
 		
 		new Setting(containerEl)
 			.setName(translations.settings.misc?.showDailyNoteBadge?.name || 'Show Daily Note task badge')
@@ -526,24 +523,20 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 			cls: 'synaptic-file-path-input'
 		});
 
-				// File 타입일 때 자동완성 드롭다운 제공
+				// File 타입일 때 자동완성 제공 (AbstractInputSuggest 사용)
 				if (file.type === 'file') {
-					const suggestionsEl = pathWrapper.createDiv({ cls: 'synaptic-file-suggestions' });
-
-				// FilePathSuggest 모듈 사용
-				new FilePathSuggest(
-					this.app,
-					textInput,
-					suggestionsEl,
-					async (filePath) => {
-						file.filePath = filePath;
-						// 파일 경로 변경 시 enabled를 false로 설정 (새로운 경로가 유효하지 않을 수 있음)
-						file.enabled = false;
-						await this.plugin.saveSettings();
-						this.display(); // Refresh the entire settings UI
-					}
-				);
-			} else if (file.type === 'web') {
+					new FilePathSuggest(
+						this.app,
+						textInput,
+						async (filePath) => {
+							file.filePath = normalizePath(filePath);
+							// 파일 경로 변경 시 enabled를 false로 설정 (새로운 경로가 유효하지 않을 수 있음)
+							file.enabled = false;
+							await this.plugin.saveSettings();
+							this.display(); // Refresh the entire settings UI
+						}
+					);
+				} else if (file.type === 'web') {
 				// Web 타입일 때는 일반 input 이벤트로 처리
 				textInput.addEventListener('blur', async () => {
 					file.filePath = textInput.value;

@@ -1,4 +1,4 @@
-import { App, moment, Notice, setIcon } from 'obsidian';
+import { App, moment, Notice, setIcon, getLanguage } from 'obsidian';
 import { SynapticViewSettings, QuickAccessFile } from '../settings';
 import { isGranularityAvailable } from '../utils/pluginChecker';
 import {
@@ -169,8 +169,8 @@ export class CalendarSubmenu {
             weekNumHeader.textContent = 'W';
         }
 		
-		// 현재 locale 확인
-		const currentLocale = moment.locale();
+		// 현재 locale 확인 (Obsidian 설정에서 가져옴)
+		const currentLocale = getLanguage();
 		const isKorean = currentLocale === 'ko';
 		
 		// 한글이면 1글자(월, 화, 수...), 영어 등은 3글자(Mon, Tue, Wed...)

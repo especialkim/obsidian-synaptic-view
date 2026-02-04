@@ -1,4 +1,4 @@
-import { moment } from 'obsidian';
+import { getLanguage } from 'obsidian';
 
 /**
  * Translation dictionary structure
@@ -224,19 +224,19 @@ const en: Translations = {
 	settings: {
 		title: 'Synaptic View',
 		replaceNewTab: {
-			name: 'Replace New Tab with Synaptic View',
-			desc: 'When enabled, clicking the New Tab button opens Synaptic View instead of the default empty state.'
+			name: 'Replace new tab with Synaptic View',
+			desc: 'When enabled, clicking the new tab button opens Synaptic View instead of the default empty state.'
 		},
-		quickAccessItems: 'Quick Access Tools',
+		quickAccessItems: 'Quick access tools',
 		addNewItem: 'Add item',
 		defaultView: {
-			title: 'Startup Screen Settings',
+			title: 'Startup screen',
 			name: 'Default item to open',
-			desc: 'Choose which Quick Access item opens by default in Synaptic View.'
+			desc: 'Choose which quick access item opens by default in Synaptic View.'
 		},
 		viewStyle: {
-			title: 'View Style',
-			notice: '⚠️ These settings apply only in Preview mode.',
+			title: 'View style',
+			notice: '⚠️ These settings apply only in preview mode.',
 			hideInlineTitle: {
 				name: 'Hide inline title',
 				desc: 'Hide the inline title at the top of the document (suitable for dashboard-style views).'
@@ -247,17 +247,17 @@ const en: Translations = {
 			}
 		},
 		misc: {
-			title: 'Misc',
+			title: 'Miscellaneous',
 			showDailyNoteBadge: {
-				name: 'Show Daily Note task badge',
-				desc: 'Show a badge on Journal/Calendar buttons indicating incomplete tasks in today\'s Daily Note.'
+				name: 'Show daily note task badge',
+				desc: 'Show a badge on journal/calendar buttons indicating incomplete tasks in today\'s daily note.'
 			}
 		},
 		fileType: {
 			file: 'File',
-			web: 'Web Page',
+			web: 'Web page',
 			journal: 'Journal',
-			calendar: 'Calendar View'
+			calendar: 'Calendar view'
 		},
 		granularity: {
 			all: 'All',
@@ -333,11 +333,11 @@ const translations: Record<string, Translations> = {
 };
 
 /**
- * Get current locale from Obsidian (via moment)
+ * Get current locale from Obsidian settings
  * Returns 'ko' for Korean, 'en' for all others
  */
 export function getCurrentLocale(): string {
-	const locale = moment.locale();
+	const locale = getLanguage();
 	return locale === 'ko' ? 'ko' : 'en';
 }
 

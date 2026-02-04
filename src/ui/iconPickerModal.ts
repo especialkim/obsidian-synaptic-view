@@ -31,7 +31,7 @@ export class IconPickerModal extends Modal {
 		this.allIcons = getIconIds();
 
 		// 제목
-		contentEl.createEl('h2', { text: 'Select Icon' });
+		contentEl.createEl('h2', { text: 'Select icon' });
 
 		// 검색 입력
 		const searchContainer = contentEl.createDiv({ cls: 'synaptic-icon-search' });
@@ -49,7 +49,7 @@ export class IconPickerModal extends Modal {
 		}
 
 		// 모든 아이콘 그리드
-		contentEl.createEl('h3', { text: 'All Icons', cls: 'synaptic-icon-section-title' });
+		contentEl.createEl('h3', { text: 'All icons', cls: 'synaptic-icon-section-title' });
 		const allIconsGrid = contentEl.createDiv({ cls: 'synaptic-icons-grid synaptic-all-icons' });
 		this.renderIcons(allIconsGrid, this.allIcons);
 
@@ -73,14 +73,14 @@ export class IconPickerModal extends Modal {
 					}
 					allIconsGrid.removeClass('synaptic-hidden');
 					contentEl.querySelectorAll('.synaptic-icon-section-title')[1]?.removeClass('synaptic-hidden');
-					contentEl.querySelectorAll('.synaptic-icon-section-title')[1]?.setText('All Icons');
+					contentEl.querySelectorAll('.synaptic-icon-section-title')[1]?.setText('All icons');
 				} else {
 					// 검색 중
 					if (this.settings.recentIcons.length > 0) {
 						contentEl.querySelector('.synaptic-recent-icons')?.addClass('synaptic-hidden');
 						contentEl.querySelectorAll('.synaptic-icon-section-title')[0]?.addClass('synaptic-hidden');
 					}
-					contentEl.querySelectorAll('.synaptic-icon-section-title')[1]?.setText('Search Results');
+					contentEl.querySelectorAll('.synaptic-icon-section-title')[1]?.setText('Search results');
 					
 					// 캐싱된 목록에서 필터링
 					const filtered = this.allIcons.filter(icon => 

@@ -1,4 +1,4 @@
-import { App, moment, TFile } from 'obsidian';
+import { App, moment, TFile, normalizePath } from 'obsidian';
 import { 
 	createDailyNote, 
 	createWeeklyNote,
@@ -160,11 +160,11 @@ export function getTodayDailyNotePath(): string {
 		// moment를 사용해 오늘 날짜를 포맷팅 (매번 실행 시점의 오늘)
 		const today = moment().format(formatInfo.format);
 		
-		// 폴더가 있으면 경로 조합, 없으면 파일명만
-		const filePath = formatInfo.folder 
-			? `${formatInfo.folder}/${today}.md`
+		// 폴더가 있으면 경로 조합, 없으면 파일명만 (normalizePath로 정규화)
+		const filePath = formatInfo.folder
+			? normalizePath(`${formatInfo.folder}/${today}.md`)
 			: `${today}.md`;
-		
+
 		return filePath;
 	} catch (error) {
 		console.error('[Synaptic View] Daily Note 경로 생성 실패:', error);
@@ -210,8 +210,9 @@ export function getJournalNotePath(granularity: JournalGranularity): string {
 		
 		const filename = today.format(formatPattern);
 		const folder = settings.folder || '';
-		
-		return folder ? `${folder}/${filename}.md` : `${filename}.md`;
+
+		// normalizePath로 경로 정규화
+		return folder ? normalizePath(`${folder}/${filename}.md`) : `${filename}.md`;
 		
 	} catch (error) {
 		console.error('[Synaptic View] Journal Note 경로 생성 실패:', error);
