@@ -27,8 +27,9 @@ export class FloatingButtonManager extends Component {
 	private calendarSubmenu: CalendarSubmenu;
     private journalSubmenu: JournalSubmenu;
 	private dailyNoteBadgeManager: DailyNoteBadgeManager;
+	private onDismiss: (() => void) | null;
 
-	constructor(app: App, settings: SynapticViewSettings, onFileSelect: (quickAccessFile: QuickAccessFile) => void, dailyNoteBadgeManager: DailyNoteBadgeManager, currentFilePath: string | null = null, currentActiveButtonId: string | null = null) {
+	constructor(app: App, settings: SynapticViewSettings, onFileSelect: (quickAccessFile: QuickAccessFile) => void, dailyNoteBadgeManager: DailyNoteBadgeManager, currentFilePath: string | null = null, currentActiveButtonId: string | null = null, onDismiss: (() => void) | null = null) {
 		super();
 		this.app = app;
 		this.settings = settings;
@@ -38,6 +39,7 @@ export class FloatingButtonManager extends Component {
 		this.calendarSubmenu = new CalendarSubmenu(app, settings, onFileSelect, (filePath: string, activeButtonId?: string) => this.updateActiveButton(filePath, activeButtonId));
 		this.journalSubmenu = new JournalSubmenu(app, settings, onFileSelect, (filePath: string, activeButtonId?: string) => this.updateActiveButton(filePath, activeButtonId));
 		this.dailyNoteBadgeManager = dailyNoteBadgeManager;
+		this.onDismiss = onDismiss;
 	}
 
 	async addFloatingButton(container: HTMLElement) {
@@ -52,6 +54,9 @@ export class FloatingButtonManager extends Component {
 
 	// Settings button (always shown last)
 	this.addSettingsButton(this.buttonContainer);
+
+	// Dismiss button (very last)
+	this.addDismissButton(this.buttonContainer);
 
 	// 키보드 이벤트 리스너 추가
 	this.setupKeyboardListeners();
@@ -420,6 +425,20 @@ export class FloatingButtonManager extends Component {
 		settingsButton.addEventListener('click', async (e) => {
 			e.stopPropagation();
 			await openPluginSettings(this.app);
+		});
+	}
+
+	private addDismissButton(container: HTMLElement) {
+		if (!this.onDismiss) return;
+
+		const translations = t();
+		const dismissButton = container.createDiv({ cls: 'synaptic-action-button synaptic-dismiss-button' });
+		dismissButton.setAttribute('aria-label', translations.buttons.dismiss);
+		setIcon(dismissButton, 'x');
+		setTooltip(dismissButton, translations.buttons.dismiss, { delay: 100 });
+		this.registerDomEvent(dismissButton, 'click', (e) => {
+			e.stopPropagation();
+			this.onDismiss?.();
 		});
 	}
 

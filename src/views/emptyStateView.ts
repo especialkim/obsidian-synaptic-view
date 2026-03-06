@@ -1,5 +1,5 @@
 import { App, Component, TFile, WorkspaceLeaf, MarkdownView } from 'obsidian';
-import { SynapticViewSettings } from '../settings';
+import { SynapticViewSettings, SynapticContainer } from '../settings';
 import { SynapticView } from './synapticView';
 import { DailyNoteBadgeManager } from '../ui/dailyNoteBadge';
 import { openPluginSettings } from '../utils/openSettings';
@@ -43,9 +43,9 @@ export class EmptyStateViewManager extends Component {
 		const leaves = this.app.workspace.getLeavesOfType('empty');
 		
 		for (const leaf of leaves) {
-			
 			const container = leaf.view.containerEl;
 			if (!container) continue;
+			if (this.isHoverPreviewLeaf(container)) continue;
 			
 			// 활성화된 파일이 있는지 확인
 			const enabledFiles = this.settings.quickAccessFiles.filter(f => f.enabled);
@@ -69,9 +69,13 @@ export class EmptyStateViewManager extends Component {
 			const synapticView = new SynapticView(this.app, this.settings, this.dailyNoteBadgeManager);
 			this.register(() => synapticView.destroy());
 			// 컨테이너에 cleanup 함수 저장 (탭 단위 정리용)
-			(container as any)._synapticDestroy = () => synapticView.destroy();
+			(container as SynapticContainer)._synapticDestroy = () => synapticView.destroy();
 			await synapticView.initializeSynapticView(leaf, defaultFile);
 		}
+	}
+
+	private isHoverPreviewLeaf(container: HTMLElement): boolean {
+		return container.closest('.hover-popover') !== null;
 	}
 
 	/**
@@ -127,10 +131,10 @@ export class EmptyStateViewManager extends Component {
 		}
 
 		// SynapticView 리소스 정리 (document-level 리스너 해제)
-		const destroyFn = (container as any)._synapticDestroy;
+		const destroyFn = (container as SynapticContainer)._synapticDestroy;
 		if (destroyFn) {
 			destroyFn();
-			delete (container as any)._synapticDestroy;
+			delete (container as SynapticContainer)._synapticDestroy;
 		}
 	}
 

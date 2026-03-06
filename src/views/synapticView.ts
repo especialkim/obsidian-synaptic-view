@@ -1,5 +1,5 @@
 import { App, TFile, WorkspaceLeaf, setIcon, Notice } from 'obsidian';
-import { SynapticViewSettings, QuickAccessFile, JournalGranularity } from '../settings';
+import { SynapticViewSettings, SynapticContainer, QuickAccessFile, JournalGranularity } from '../settings';
 import { FloatingButtonManager } from '../ui/floatingButton';
 import { DailyNoteBadgeManager } from '../ui/dailyNoteBadge';
 import { getJournalNotePath, createJournalNote } from '../utils/pluginChecker';
@@ -97,7 +97,8 @@ export class SynapticView {
 			(qaf) => this.loadFile(leaf, qaf, false),
 			this.dailyNoteBadgeManager,
 			preservedFilePath,
-			preservedActiveButtonId
+			preservedActiveButtonId,
+			() => this.dismissView(leaf)
 		);
 		this.floatingButtonManager.load();
 		await this.floatingButtonManager.addFloatingButton(targetContainer as HTMLElement);
@@ -346,7 +347,8 @@ export class SynapticView {
 					(qaf) => this.loadFile(leaf, qaf, false),
 					this.dailyNoteBadgeManager,
 					actualFilePath,
-					previousActiveButtonId
+					previousActiveButtonId,
+					() => this.dismissView(leaf)
 				);
 				this.floatingButtonManager.load();
 				await this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
@@ -366,6 +368,45 @@ export class SynapticView {
 	 */
 	getCurrentFilePath(): string | null {
 		return this.currentFilePath;
+	}
+
+	/**
+	 * Synaptic View를 해제하고 일반 탭으로 복원합니다.
+	 */
+	private dismissView(leaf: WorkspaceLeaf) {
+		const container = leaf.view.containerEl;
+		if (!container) return;
+
+		// Synaptic View 클래스/속성 제거
+		container.removeAttribute('data-synaptic-managed');
+		container.removeClass('synaptic-viewer-container');
+		container.removeClass('hide-inline-title');
+		container.removeClass('hide-embedded-mentions');
+
+		// 플로팅 버튼 제거
+		const viewContent = container.querySelector('.view-content');
+		if (viewContent) {
+			const floatingButtons = viewContent.querySelector('.synaptic-action-buttons');
+			if (floatingButtons) {
+				floatingButtons.remove();
+			}
+		}
+
+		// 탭 헤더 복원
+		const tabHeaderEl = (leaf as WorkspaceLeaf & { tabHeaderEl?: HTMLElement }).tabHeaderEl;
+		if (tabHeaderEl) {
+			tabHeaderEl.removeClass('synaptic-view-tab');
+			tabHeaderEl.removeAttribute('data-synaptic-icon');
+		}
+
+		// _synapticDestroy 콜백 정리
+		const destroyFn = (container as SynapticContainer)._synapticDestroy;
+		if (destroyFn) {
+			delete (container as SynapticContainer)._synapticDestroy;
+		}
+
+		// FloatingButtonManager 정리
+		this.destroy();
 	}
 
 	/**

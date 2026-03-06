@@ -1,6 +1,6 @@
 import { App, Plugin } from 'obsidian';
 import { SynapticView } from '../views/synapticView';
-import { SynapticViewSettings } from '../settings';
+import { SynapticViewSettings, SynapticContainer } from '../settings';
 import { DailyNoteBadgeManager } from '../ui/dailyNoteBadge';
 
 /**
@@ -26,7 +26,7 @@ export async function openSynapticViewTab(app: App, settings: SynapticViewSettin
 	// 컨테이너에 cleanup 함수 저장 (탭 단위 정리용)
 	const container = newLeaf.view.containerEl;
 	if (container) {
-		(container as any)._synapticDestroy = () => synapticView.destroy();
+		(container as SynapticContainer)._synapticDestroy = () => synapticView.destroy();
 	}
 	await synapticView.initializeSynapticView(newLeaf);
 }

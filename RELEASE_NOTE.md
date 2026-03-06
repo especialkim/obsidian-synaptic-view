@@ -1,5 +1,25 @@
 # Release Notes
 
+## 0.1.3
+
+Dismiss button, hover preview fix, and code quality improvements.
+
+### Features
+
+- **Dismiss button**: Added an X button at the end of the Quick Access button group to deactivate Synaptic View and restore the tab to its default state
+
+### Fixes
+
+- **Hover preview**: Synaptic View no longer injects into hover preview popover leaves
+- **registerDomEvent**: Dismiss button click handler uses `registerDomEvent()` for proper lifecycle cleanup
+
+### Technical
+
+- `SynapticContainer` interface replaces `as any` casting for `_synapticDestroy` property across all files
+- Sentence case applied to dismiss button translation (`'Dismiss'` not `'Dismiss Synaptic View'`)
+
+---
+
 ## 0.1.2
 
 Community plugin review compliance - lifecycle management improvements.
@@ -78,7 +98,6 @@ A dynamic control center that unifies your project hubs, daily notes, task board
 
 # Future Roadmap
 
-- **Quick Access Dismiss Button**: Add an X button at the end of the button group to deactivate Synaptic View
 - **Quick Access Grouping**: Organize buttons by color or category
 - **Advanced Default View Mode**: Time-based or context-based default views
 - **Group Type**: Bundle Quick Access items into collapsible groups

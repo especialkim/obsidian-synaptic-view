@@ -1,3 +1,7 @@
+export interface SynapticContainer extends HTMLElement {
+	_synapticDestroy?: () => void;
+}
+
 export type QuickAccessType = 'file' | 'web' | 'calendar' | 'journal';
 
 export type JournalGranularity = 'all' | 'day' | 'week' | 'month' | 'quarter' | 'year';

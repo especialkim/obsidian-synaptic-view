@@ -107,6 +107,7 @@ interface Translations {
 		searchFiles: string;
 		settings: string;
 		edit: string;
+		dismiss: string;
 	};
 }
 
@@ -213,7 +214,8 @@ const ko: Translations = {
 		createNewFile: '새 파일 만들기',
 		searchFiles: '파일 검색',
 		settings: '설정',
-		edit: '편집'
+		edit: '편집',
+		dismiss: '해제'
 	}
 };
 
@@ -320,7 +322,8 @@ const en: Translations = {
 		createNewFile: 'Create new file',
 		searchFiles: 'Search files',
 		settings: 'Settings',
-		edit: 'Edit'
+		edit: 'Edit',
+		dismiss: 'Dismiss'
 	}
 };
 
