@@ -1,5 +1,25 @@
 # Release Notes
 
+## 0.1.2
+
+Community plugin review compliance - lifecycle management improvements.
+
+### Fixes
+
+- **registerDomEvent**: Replaced raw `addEventListener`/`removeEventListener` with Obsidian's `registerDomEvent()` for automatic cleanup in `FloatingButtonManager`
+- **Component lifecycle**: `FloatingButtonManager` now extends `Component` with proper `load()`/`unload()` lifecycle
+- **Memory leak fix**: `EmptyStateViewManager` now extends `Component` using `this.register()` and `addChild()` pattern instead of manual `Map<WorkspaceLeaf, SynapticView>` tracking
+- **Per-tab cleanup**: Document-level listeners are now properly cleaned up when individual tabs close mid-session, not just on plugin unload
+
+### Technical
+
+- `EmptyStateViewManager` uses `addChild()` for automatic parent-child Component cleanup
+- DOM attribute `data-synaptic-quick-access` replaces in-memory Map for quick-access navigation state
+- `_synapticDestroy` callback stored on container elements for per-leaf lifecycle cleanup
+- Command-opened Synaptic Views register cleanup via `plugin.register()`
+
+---
+
 ## 0.1.1
 
 Community plugin submission compliance and bug fixes.
@@ -58,6 +78,7 @@ A dynamic control center that unifies your project hubs, daily notes, task board
 
 # Future Roadmap
 
+- **Quick Access Dismiss Button**: Add an X button at the end of the button group to deactivate Synaptic View
 - **Quick Access Grouping**: Organize buttons by color or category
 - **Advanced Default View Mode**: Time-based or context-based default views
 - **Group Type**: Bundle Quick Access items into collapsible groups

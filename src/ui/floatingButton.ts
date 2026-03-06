@@ -1,4 +1,4 @@
-import { App, setIcon, setTooltip, TFile } from 'obsidian';
+import { App, Component, setIcon, setTooltip, TFile } from 'obsidian';
 import { createNewFile } from '../actions/createFileAction';
 import { navigateToFile } from '../actions/navigateFileAction';
 import { SynapticViewSettings, QuickAccessFile, JournalGranularity } from '../settings';
@@ -16,7 +16,7 @@ export interface ActionButton {
 	action: (app: App) => void;
 }
 
-export class FloatingButtonManager {
+export class FloatingButtonManager extends Component {
 	private app: App;
 	private settings: SynapticViewSettings;
 	private onFileSelect: (quickAccessFile: QuickAccessFile) => void;
@@ -28,12 +28,8 @@ export class FloatingButtonManager {
     private journalSubmenu: JournalSubmenu;
 	private dailyNoteBadgeManager: DailyNoteBadgeManager;
 
-	// Event handlers stored for cleanup
-	private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
-	private keyupHandler: ((e: KeyboardEvent) => void) | null = null;
-	private clickHandler: ((e: MouseEvent) => void) | null = null;
-
 	constructor(app: App, settings: SynapticViewSettings, onFileSelect: (quickAccessFile: QuickAccessFile) => void, dailyNoteBadgeManager: DailyNoteBadgeManager, currentFilePath: string | null = null, currentActiveButtonId: string | null = null) {
+		super();
 		this.app = app;
 		this.settings = settings;
 		this.onFileSelect = onFileSelect;
@@ -281,26 +277,23 @@ export class FloatingButtonManager {
 }
 
 	private setupKeyboardListeners() {
-		this.keydownHandler = (e: KeyboardEvent) => {
+		this.registerDomEvent(activeWindow.document, 'keydown', (e: KeyboardEvent) => {
 			if (e.ctrlKey || e.metaKey) {
 				this.isModifierKeyPressed = true;
 				this.updateButtonsForEditMode();
 			}
-		};
+		});
 
-		this.keyupHandler = (e: KeyboardEvent) => {
+		this.registerDomEvent(activeWindow.document, 'keyup', (e: KeyboardEvent) => {
 			if (!e.ctrlKey && !e.metaKey) {
 				this.isModifierKeyPressed = false;
 				this.updateButtonsForEditMode();
 			}
-		};
-
-		activeWindow.document.addEventListener('keydown', this.keydownHandler);
-		activeWindow.document.addEventListener('keyup', this.keyupHandler);
+		});
 	}
 
 	private setupOutsideClickListener() {
-		this.clickHandler = (e: MouseEvent) => {
+		this.registerDomEvent(activeWindow.document, 'click', (e: MouseEvent) => {
 			// 서브메뉴나 All 버튼, Calendar 버튼 클릭이 아니면 서브메뉴 닫기
 			const target = e.target as HTMLElement;
             if (!target.closest('.synaptic-journal-submenu') &&
@@ -310,27 +303,7 @@ export class FloatingButtonManager {
 				this.journalSubmenu.closeSubmenu();
                 this.calendarSubmenu.closeSubmenu();
             }
-		};
-
-		activeWindow.document.addEventListener('click', this.clickHandler);
-	}
-
-	/**
-	 * 이벤트 리스너 정리 (plugin unload 시 호출 필요)
-	 */
-	destroy() {
-		if (this.keydownHandler) {
-			activeWindow.document.removeEventListener('keydown', this.keydownHandler);
-			this.keydownHandler = null;
-		}
-		if (this.keyupHandler) {
-			activeWindow.document.removeEventListener('keyup', this.keyupHandler);
-			this.keyupHandler = null;
-		}
-		if (this.clickHandler) {
-			activeWindow.document.removeEventListener('click', this.clickHandler);
-			this.clickHandler = null;
-		}
+		});
 	}
 
 	private updateButtonsForEditMode() {

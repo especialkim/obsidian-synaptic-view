@@ -12,7 +12,7 @@ export function registerCommands(plugin: SynapticViewPlugin) {
 		id: 'open-synaptic-view',
 		name: 'Open Synaptic View tab',
 		callback: async () => {
-			await openSynapticViewTab(plugin.app, plugin.settings, plugin.dailyNoteBadgeManager);
+			await openSynapticViewTab(plugin.app, plugin.settings, plugin.dailyNoteBadgeManager, plugin);
 		}
 	});
 

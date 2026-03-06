@@ -33,7 +33,7 @@ export default class SynapticViewPlugin extends Plugin {
 		this.dailyNoteBadgeManager = new DailyNoteBadgeManager(this.app);
 
 		// Empty State View Manager initialization
-		this.emptyStateManager = new EmptyStateViewManager(this.app, this.settings, this.dailyNoteBadgeManager, this);
+		this.emptyStateManager = this.addChild(new EmptyStateViewManager(this.app, this.settings, this.dailyNoteBadgeManager));
 
 		// Register settings tab
 		this.addSettingTab(new SynapticViewSettingTab(this.app, this));
@@ -73,8 +73,7 @@ export default class SynapticViewPlugin extends Plugin {
 	}
 
 	onunload() {
-		// 이벤트 리스너 정리
-		this.emptyStateManager.destroy();
+		// EmptyStateViewManager는 addChild로 등록되어 자동 정리됨
 	}
 
 	async customizeEmptyState() {

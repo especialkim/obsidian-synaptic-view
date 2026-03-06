@@ -16,7 +16,6 @@ export class SynapticView {
 	private settings: SynapticViewSettings;
 	private floatingButtonManager: FloatingButtonManager | null = null;
 	private currentFilePath: string | null = null;
-	private isQuickAccessNavigation: boolean = false;
 	private dailyNoteBadgeManager: DailyNoteBadgeManager;
 
 	constructor(app: App, settings: SynapticViewSettings, dailyNoteBadgeManager: DailyNoteBadgeManager) {
@@ -89,7 +88,7 @@ export class SynapticView {
 
 		// 이전 FloatingButtonManager 정리
 		if (this.floatingButtonManager) {
-			this.floatingButtonManager.destroy();
+			this.floatingButtonManager.unload();
 		}
 
 		this.floatingButtonManager = new FloatingButtonManager(
@@ -100,6 +99,7 @@ export class SynapticView {
 			preservedFilePath,
 			preservedActiveButtonId
 		);
+		this.floatingButtonManager.load();
 		await this.floatingButtonManager.addFloatingButton(targetContainer as HTMLElement);
 	}
 
@@ -110,9 +110,6 @@ export class SynapticView {
 	 * @param isInitialLoad - 초기 로드 여부 (활성 버튼 ID 설정에 사용)
 	 */
 	async loadFile(leaf: WorkspaceLeaf, quickAccessFile: QuickAccessFile, isInitialLoad: boolean) {
-		// QuickAccess를 통한 탐색임을 표시
-		this.isQuickAccessNavigation = true;
-		
 		// Journal Note 타입이면 granularity에 따라 경로를 동적으로 계산
 		let filePath = quickAccessFile.filePath;
 		let granularity: JournalGranularity = 'day';
@@ -178,7 +175,13 @@ export class SynapticView {
 
 			if (file instanceof TFile) {
 				this.currentFilePath = filePath;
-				
+
+				// QuickAccess를 통한 탐색임을 DOM 속성으로 표시 (file-open 이벤트에서 확인용)
+				const container = leaf.view.containerEl;
+				if (container) {
+					container.setAttribute('data-synaptic-quick-access', 'true');
+				}
+
 				// 실제로 Obsidian 뷰어로 파일 열기 (읽기 모드)
 				await leaf.openFile(file, { state: { mode: 'preview' } });
 
@@ -186,46 +189,49 @@ export class SynapticView {
 				setTimeout(() => {
 					console.log('[Synaptic View] Setting title and UI after file open, icon:', iconName);
 					this.setLeafTitle(leaf, iconName);
-					
+
 					// 활성 버튼 ID 설정: 초기 로드 시 또는 현재 활성 버튼 ID 유지
 					const activeButtonId = isInitialLoad ? quickAccessFile.id : (this.floatingButtonManager?.currentActiveButtonId || null);
 					this.addContainerUI(leaf, filePath, activeButtonId);
-					
+
 					// QuickAccess 탐색 플래그 리셋
-					this.isQuickAccessNavigation = false;
+					if (container) {
+						container.removeAttribute('data-synaptic-quick-access');
+					}
 				}, 50);
 			}
 		} else if (quickAccessFile.type === 'web') {
 			// Web 타입: 현재 탭에서 URL 열기
 			this.currentFilePath = filePath;
-			
+
+			// QuickAccess를 통한 탐색임을 DOM 속성으로 표시
+			const webContainer = leaf.view.containerEl;
+			if (webContainer) {
+				webContainer.setAttribute('data-synaptic-quick-access', 'true');
+			}
+
 			// leaf에 webviewer 설정
 			await leaf.setViewState({
 				type: 'webviewer',
 				state: { url: filePath }
 			});
-			
+
 			// 웹페이지가 로드된 후 UI 업데이트
 			setTimeout(() => {
 				this.setLeafTitle(leaf, iconName);
-				
+
 				// 활성 버튼 ID 설정: 초기 로드 시 또는 현재 활성 버튼 ID 유지
 				const activeButtonId = isInitialLoad ? quickAccessFile.id : (this.floatingButtonManager?.currentActiveButtonId || null);
 				this.addContainerUI(leaf, filePath, activeButtonId);
-				
+
 				// QuickAccess 탐색 플래그 리셋
-				this.isQuickAccessNavigation = false;
+				if (webContainer) {
+					webContainer.removeAttribute('data-synaptic-quick-access');
+				}
 			}, 100);
 		}
 	}
 	
-	/**
-	 * QuickAccess를 통한 탐색인지 확인
-	 */
-	isQuickAccessNavigationActive(): boolean {
-		return this.isQuickAccessNavigation;
-	}
-
 	/**
 	 * 탭 타이틀과 아이콘을 설정합니다.
 	 */
@@ -331,7 +337,7 @@ export class SynapticView {
 
 				// 이전 FloatingButtonManager 정리
 				if (this.floatingButtonManager) {
-					this.floatingButtonManager.destroy();
+					this.floatingButtonManager.unload();
 				}
 
 				this.floatingButtonManager = new FloatingButtonManager(
@@ -342,6 +348,7 @@ export class SynapticView {
 					actualFilePath,
 					previousActiveButtonId
 				);
+				this.floatingButtonManager.load();
 				await this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
 			}
 		}
@@ -366,7 +373,7 @@ export class SynapticView {
 	 */
 	destroy() {
 		if (this.floatingButtonManager) {
-			this.floatingButtonManager.destroy();
+			this.floatingButtonManager.unload();
 			this.floatingButtonManager = null;
 		}
 	}

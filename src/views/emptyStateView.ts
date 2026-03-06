@@ -1,4 +1,4 @@
-import { App, TFile, Plugin, WorkspaceLeaf, MarkdownView } from 'obsidian';
+import { App, Component, TFile, WorkspaceLeaf, MarkdownView } from 'obsidian';
 import { SynapticViewSettings } from '../settings';
 import { SynapticView } from './synapticView';
 import { DailyNoteBadgeManager } from '../ui/dailyNoteBadge';
@@ -10,21 +10,20 @@ import { t } from '../utils/i18n';
  * New Tab을 Synaptic View로 대체하는 기능을 담당
  * (설정에서 on/off 가능하도록 예정)
  */
-export class EmptyStateViewManager {
+export class EmptyStateViewManager extends Component {
 	private app: App;
 	private settings: SynapticViewSettings;
-	private synapticViews: Map<WorkspaceLeaf, SynapticView> = new Map();
 	private lastActiveLeaf: WorkspaceLeaf | null = null;
 	private dailyNoteBadgeManager: DailyNoteBadgeManager;
 
-	constructor(app: App, settings: SynapticViewSettings, dailyNoteBadgeManager: DailyNoteBadgeManager, plugin: Plugin) {
+	constructor(app: App, settings: SynapticViewSettings, dailyNoteBadgeManager: DailyNoteBadgeManager) {
+		super();
 		this.app = app;
 		this.settings = settings;
 		this.dailyNoteBadgeManager = dailyNoteBadgeManager;
 
 		// file-open 이벤트 감지: QuickAccess 외의 방법으로 파일을 열면 Synaptic View 속성 제거
-		// plugin에 등록하여 plugin unload 시 자동 정리
-		plugin.registerEvent(
+		this.registerEvent(
 			this.app.workspace.on('file-open', (file) => {
 				this.handleFileOpen(file);
 			})
@@ -68,7 +67,9 @@ export class EmptyStateViewManager {
 			
 			// Synaptic View 초기화 (defaultFile을 초기 파일로 전달)
 			const synapticView = new SynapticView(this.app, this.settings, this.dailyNoteBadgeManager);
-			this.synapticViews.set(leaf, synapticView);
+			this.register(() => synapticView.destroy());
+			// 컨테이너에 cleanup 함수 저장 (탭 단위 정리용)
+			(container as any)._synapticDestroy = () => synapticView.destroy();
 			await synapticView.initializeSynapticView(leaf, defaultFile);
 		}
 	}
@@ -99,14 +100,8 @@ export class EmptyStateViewManager {
 		// Synaptic View로 관리되는 컨테이너인지 확인
 		if (!container.hasClass('synaptic-viewer-container')) return;
 		
-		// 해당 leaf의 SynapticView 인스턴스 확인
-		const synapticView = this.synapticViews.get(activeLeaf);
-		if (!synapticView) {
-			return;
-		}
-		
-		// QuickAccess를 통한 탐색인지 확인
-		if (synapticView.isQuickAccessNavigationActive()) {
+		// QuickAccess를 통한 탐색인지 확인 (DOM 속성으로 체크)
+		if (container.getAttribute('data-synaptic-quick-access') === 'true') {
 			return;
 		}
 		
@@ -130,9 +125,13 @@ export class EmptyStateViewManager {
 				floatingButtons.remove();
 			}
 		}
-		
-		// synapticViews Map에서 제거
-		this.synapticViews.delete(activeLeaf);
+
+		// SynapticView 리소스 정리 (document-level 리스너 해제)
+		const destroyFn = (container as any)._synapticDestroy;
+		if (destroyFn) {
+			destroyFn();
+			delete (container as any)._synapticDestroy;
+		}
 	}
 
 	private showSetupMessage(container: HTMLElement) {
@@ -254,14 +253,4 @@ export class EmptyStateViewManager {
 		});
 	}
 
-	/**
-	 * 리소스 정리 (플러그인 unload 시 호출)
-	 */
-	destroy() {
-		// 모든 SynapticView 인스턴스의 이벤트 리스너 정리
-		this.synapticViews.forEach((synapticView) => {
-			synapticView.destroy();
-		});
-		this.synapticViews.clear();
-	}
 }
