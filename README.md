@@ -24,7 +24,7 @@ You've spent hours crafting the perfect homepage note:
 
 Synaptic View isn't a note—it's a **dynamic control center** that lives at your fingertips:
 - **No coding required**: Pick icons, choose files, toggle buttons on—done in minutes
-- **No maintenance**: Your vault structure changes? Your buttons still work
+- **Less upkeep**: Configure buttons instead of constantly maintaining a homepage note
 - **No scrolling**: Every destination is one click away, always visible
 - **Real-time updates**: See today's tasks without opening notes
 
@@ -146,7 +146,7 @@ Run `Add current file to Quick Access` from the command palette:
 2. Copy files to `<Vault>/.obsidian/plugins/obsidian-synaptic-view/`
 3. Restart Obsidian and enable **Synaptic View** in **Settings → Community plugins**
 
-> **Compatibility**: Requires Obsidian v0.15.0 or higher. Currently desktop-only.
+> **Compatibility**: Requires Obsidian v1.8.0 or higher. Currently desktop-only.
 
 ---
 
