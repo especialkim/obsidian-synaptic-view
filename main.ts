@@ -113,6 +113,10 @@ export default class SynapticViewPlugin extends Plugin {
 	}
 
 	onunload() {
+		if (this.refreshOpenViewsTimeout !== null) {
+			window.clearTimeout(this.refreshOpenViewsTimeout);
+			this.refreshOpenViewsTimeout = null;
+		}
 		// EmptyStateViewManager는 addChild로 등록되어 자동 정리됨
 	}
 

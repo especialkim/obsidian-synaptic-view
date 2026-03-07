@@ -80,7 +80,7 @@ export class FloatingButtonManager extends Component {
 		createButton.setAttribute('aria-label', translations.buttons.createNewFile);
 		setIcon(createButton, 'file-plus');
 		setTooltip(createButton, translations.buttons.createNewFile, { delay: 100 });
-		createButton.addEventListener('click', async (e) => {
+		this.registerDomEvent(createButton, 'click', async (e) => {
 			e.stopPropagation();
 			await createNewFile(this.app);
 		});
@@ -90,7 +90,7 @@ export class FloatingButtonManager extends Component {
 		searchButton.setAttribute('aria-label', translations.buttons.searchFiles);
 		setIcon(searchButton, 'search');
 		setTooltip(searchButton, translations.buttons.searchFiles, { delay: 100 });
-		searchButton.addEventListener('click', (e) => {
+		this.registerDomEvent(searchButton, 'click', (e) => {
 			e.stopPropagation();
 			navigateToFile(this.app);
 		});
@@ -212,7 +212,7 @@ export class FloatingButtonManager extends Component {
 	}
 	
     // 마우스 호버 이벤트 (편집 모드용)
-    button.addEventListener('mouseenter', () => {
+    this.registerDomEvent(button, 'mouseenter', () => {
 		// currentFilePath가 있고, file/journal/calendar 타입 편집 가능
 		if (this.isModifierKeyPressed && 
 		    this.currentFilePath && 
@@ -232,11 +232,11 @@ export class FloatingButtonManager extends Component {
 		}
 	});
 
-    button.addEventListener('mouseleave', () => {
+    this.registerDomEvent(button, 'mouseleave', () => {
         this.restoreOriginalIcon(button);
     });
 	
-	button.addEventListener('click', (e) => {
+	this.registerDomEvent(button, 'click', (e) => {
 		e.stopPropagation();
 		
 		
@@ -422,7 +422,7 @@ export class FloatingButtonManager extends Component {
 		settingsButton.setAttribute('aria-label', translations.buttons.settings);
 		setIcon(settingsButton, 'settings');
 		setTooltip(settingsButton, translations.buttons.settings, { delay: 100 });
-		settingsButton.addEventListener('click', async (e) => {
+		this.registerDomEvent(settingsButton, 'click', async (e) => {
 			e.stopPropagation();
 			await openPluginSettings(this.app);
 		});

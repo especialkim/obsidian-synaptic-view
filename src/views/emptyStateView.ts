@@ -77,7 +77,7 @@ export class EmptyStateViewManager extends Component {
 		if (!file) return;
 		
 		// 활성화된 leaf 확인
-		const activeLeaf = this.app.workspace.activeLeaf;
+		const activeLeaf = this.app.workspace.getMostRecentLeaf();
 		if (!activeLeaf) return;
 		
 		const container = activeLeaf.view.containerEl;
@@ -149,7 +149,7 @@ export class EmptyStateViewManager extends Component {
 			cls: 'mod-cta synaptic-setup-button'
 		});
 		
-		settingsButton.addEventListener('click', async () => {
+		this.registerDomEvent(settingsButton, 'click', async () => {
 			await openPluginSettings(this.app);
 		});
 	}
