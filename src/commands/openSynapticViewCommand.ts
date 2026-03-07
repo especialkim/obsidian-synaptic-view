@@ -23,9 +23,10 @@ export async function openSynapticViewTab(app: App, settings: SynapticViewSettin
 	// Synaptic View 초기화
 	const synapticView = new SynapticView(app, settings, dailyNoteBadgeManager);
 	plugin.register(() => synapticView.destroy());
-	// 컨테이너에 cleanup 함수 저장 (탭 단위 정리용)
+	// 컨테이너에 SynapticView 인스턴스 및 cleanup 함수 저장
 	const container = newLeaf.view.containerEl;
 	if (container) {
+		(container as SynapticContainer)._synapticView = synapticView;
 		(container as SynapticContainer)._synapticDestroy = () => synapticView.destroy();
 	}
 	await synapticView.initializeSynapticView(newLeaf);

@@ -1,7 +1,7 @@
 {
 	"id": "synaptic-view",
 	"name": "Synaptic View",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"minAppVersion": "1.8.0",
 	"description": "A dynamic control center for your vault. Unify hubs, notes, tasks, periodic notes, and web resources with intuitive buttons. Replace new tab for instant access.",
 	"author": "Yongmini",

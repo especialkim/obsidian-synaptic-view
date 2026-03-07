@@ -1,5 +1,27 @@
 # Release Notes
 
+## 0.1.4
+
+Empty state handling and live settings refresh.
+
+### Fixes
+
+- **Empty state on command open**: Opening Synaptic View via command palette with no Quick Access items now shows setup guide instead of blank screen
+- **Windows flickering**: Resolved race condition where setup message would briefly appear then vanish on empty tabs
+
+### Improvements
+
+- **Live settings refresh**: Changes to Quick Access items in settings now immediately update all open Synaptic View tabs without requiring a new tab
+- **State preservation**: Each tab retains its currently active file/button when settings change; only tabs viewing deleted items fall back to default
+
+### Technical
+
+- `SynapticContainer` now stores `_synapticView` instance for direct refresh access
+- `refreshFloatingButtons()` method on `SynapticView` rebuilds button bar while preserving active state
+- `refreshOpenSynapticViews()` on plugin iterates managed leaves on settings change
+
+---
+
 ## 0.1.3
 
 Dismiss button, hover preview fix, and code quality improvements.

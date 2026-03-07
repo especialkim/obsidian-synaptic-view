@@ -68,7 +68,8 @@ export class EmptyStateViewManager extends Component {
 			// Synaptic View 초기화 (defaultFile을 초기 파일로 전달)
 			const synapticView = new SynapticView(this.app, this.settings, this.dailyNoteBadgeManager);
 			this.register(() => synapticView.destroy());
-			// 컨테이너에 cleanup 함수 저장 (탭 단위 정리용)
+			// 컨테이너에 SynapticView 인스턴스 및 cleanup 함수 저장
+			(container as SynapticContainer)._synapticView = synapticView;
 			(container as SynapticContainer)._synapticDestroy = () => synapticView.destroy();
 			await synapticView.initializeSynapticView(leaf, defaultFile);
 		}

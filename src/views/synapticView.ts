@@ -3,6 +3,7 @@ import { SynapticViewSettings, SynapticContainer, QuickAccessFile, JournalGranul
 import { FloatingButtonManager } from '../ui/floatingButton';
 import { DailyNoteBadgeManager } from '../ui/dailyNoteBadge';
 import { getJournalNotePath, createJournalNote } from '../utils/pluginChecker';
+import { openPluginSettings } from '../utils/openSettings';
 import { t } from '../utils/i18n';
 
 /**
@@ -35,10 +36,13 @@ export class SynapticView {
 		const container = leaf.view.containerEl;
 		if (!container) return;
 		
-		// No enabled files - show setup message (handled by emptyStateView)
+		// No enabled files - show setup message
 		if (enabledFiles.length === 0) {
 			const emptyState = container.querySelector('.empty-state');
 			if (emptyState) {
+				emptyState.empty();
+				(emptyState as HTMLElement).addClass('synaptic-empty-state');
+				this.showSetupMessage(emptyState as HTMLElement);
 				return;
 			}
 		}
@@ -399,14 +403,83 @@ export class SynapticView {
 			tabHeaderEl.removeAttribute('data-synaptic-icon');
 		}
 
-		// _synapticDestroy 콜백 정리
-		const destroyFn = (container as SynapticContainer)._synapticDestroy;
-		if (destroyFn) {
-			delete (container as SynapticContainer)._synapticDestroy;
-		}
+		// 컨테이너에 저장된 참조 정리
+		delete (container as SynapticContainer)._synapticView;
+		delete (container as SynapticContainer)._synapticDestroy;
 
 		// FloatingButtonManager 정리
 		this.destroy();
+	}
+
+	/**
+	 * 설정 변경 시 열린 Synaptic View의 플로팅 버튼을 갱신합니다.
+	 * 현재 보고 있는 파일/버튼 상태를 유지하면서 버튼 바만 재생성합니다.
+	 */
+	async refreshFloatingButtons(leaf: WorkspaceLeaf) {
+		const container = leaf.view.containerEl;
+		if (!container) return;
+
+		const enabledFiles = this.settings.quickAccessFiles.filter(f => f.enabled);
+
+		// Quick Access가 모두 비었으면 empty 상태로 전환
+		if (enabledFiles.length === 0) {
+			this.destroy();
+			// 기존 버튼 제거
+			const existingButtons = container.querySelectorAll('.synaptic-action-buttons');
+			existingButtons.forEach(btn => btn.remove());
+			// empty view로 전환
+			await leaf.setViewState({ type: 'empty', active: true });
+			const emptyState = container.querySelector('.empty-state');
+			if (emptyState) {
+				emptyState.empty();
+				(emptyState as HTMLElement).addClass('synaptic-empty-state');
+				this.showSetupMessage(emptyState as HTMLElement);
+			}
+			return;
+		}
+
+		// 현재 활성 버튼의 Quick Access 항목이 아직 존재하는지 확인
+		const activeButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
+		const stillExists = activeButtonId
+			? enabledFiles.some(f => f.id === activeButtonId)
+			: false;
+
+		if (stillExists) {
+			// 현재 상태 유지하면서 버튼 바만 재생성
+			this.addContainerUI(leaf, this.currentFilePath || '', activeButtonId);
+		} else {
+			// 삭제된 항목이었으면 전체 재초기화 (default로 전환)
+			await this.initializeSynapticView(leaf);
+		}
+	}
+
+	/**
+	 * Quick Access가 비어있을 때 설정 안내 메시지를 표시합니다.
+	 */
+	private showSetupMessage(container: HTMLElement) {
+		const translations = t();
+		container.empty();
+		const contentDiv = container.createDiv({ cls: 'synaptic-setup-message' });
+
+		contentDiv.createEl('h2', { text: translations.settings.setup.title });
+		contentDiv.createEl('p', {
+			text: translations.settings.setup.noItems,
+			cls: 'synaptic-setup-text'
+		});
+		contentDiv.createEl('p', {
+			text: translations.settings.setup.addItems,
+			cls: 'synaptic-setup-text'
+		});
+
+		const buttonDiv = contentDiv.createDiv({ cls: 'synaptic-setup-button-container' });
+		const settingsButton = buttonDiv.createEl('button', {
+			text: translations.settings.setup.openSettings,
+			cls: 'mod-cta synaptic-setup-button'
+		});
+
+		settingsButton.addEventListener('click', async () => {
+			await openPluginSettings(this.app);
+		});
 	}
 
 	/**

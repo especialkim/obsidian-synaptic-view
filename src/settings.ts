@@ -1,5 +1,6 @@
 export interface SynapticContainer extends HTMLElement {
 	_synapticDestroy?: () => void;
+	_synapticView?: import('./views/synapticView').SynapticView;
 }
 
 export type QuickAccessType = 'file' | 'web' | 'calendar' | 'journal';

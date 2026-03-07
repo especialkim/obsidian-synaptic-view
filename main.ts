@@ -1,5 +1,5 @@
 import { Plugin, setIcon, addIcon } from 'obsidian';
-import { SynapticViewSettings, DEFAULT_SETTINGS } from './src/settings';
+import { SynapticViewSettings, SynapticContainer, DEFAULT_SETTINGS } from './src/settings';
 import { SynapticViewSettingTab } from './src/settingsTab';
 import { EmptyStateViewManager } from './src/views/emptyStateView';
 import { DailyNoteBadgeManager } from './src/ui/dailyNoteBadge';
@@ -78,6 +78,18 @@ export default class SynapticViewPlugin extends Plugin {
 
 	async customizeEmptyState() {
 		await this.emptyStateManager.customizeEmptyState();
+	}
+
+	/**
+	 * 열려있는 모든 Synaptic View 탭의 플로팅 버튼을 갱신합니다.
+	 */
+	async refreshOpenSynapticViews() {
+		this.app.workspace.iterateAllLeaves(leaf => {
+			const container = leaf.view.containerEl as SynapticContainer;
+			if (container?.getAttribute('data-synaptic-managed') === 'true' && container._synapticView) {
+				container._synapticView.refreshFloatingButtons(leaf);
+			}
+		});
 	}
 
 	/**

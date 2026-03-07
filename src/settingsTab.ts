@@ -47,6 +47,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 					this.plugin.settings.replaceNewTabWithSynapticView = value;
 					await this.plugin.saveSettings();
 					this.plugin.customizeEmptyState();
+					this.plugin.refreshOpenSynapticViews();
 				}));
 
 		// (Default view selection moved below Quick Access items per new structure)
@@ -203,6 +204,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 					this.plugin.settings.hideInlineTitle = value;
 					await this.plugin.saveSettings();
 					this.plugin.customizeEmptyState();
+					this.plugin.refreshOpenSynapticViews();
 				}));
 
 		// Hide embedded mentions option
@@ -215,6 +217,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 					this.plugin.settings.hideEmbeddedMentions = value;
 					await this.plugin.saveSettings();
 					this.plugin.customizeEmptyState();
+					this.plugin.refreshOpenSynapticViews();
 				}));
 		
 		// Misc Section
@@ -229,6 +232,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 					this.plugin.settings.showDailyNoteBadge = value;
 					await this.plugin.saveSettings();
 					this.plugin.customizeEmptyState();
+					this.plugin.refreshOpenSynapticViews();
 				}));
 	}
 
@@ -358,6 +362,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 						this.display(); // Refresh the entire settings UI
 						this.plugin.customizeEmptyState();
+					this.plugin.refreshOpenSynapticViews();
 					});
 			} else {
 				// First item: button exists but invisible
@@ -386,6 +391,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 						this.display(); // Refresh the entire settings UI
 						this.plugin.customizeEmptyState();
+					this.plugin.refreshOpenSynapticViews();
 					});
 			} else {
 				// Last item: button exists but invisible
@@ -415,6 +421,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 						this.display();
 						this.plugin.customizeEmptyState();
+					this.plugin.refreshOpenSynapticViews();
 					}
 				).open();
 			});
@@ -492,6 +499,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 				await this.plugin.saveSettings();
 				this.display(); // 아이콘 업데이트를 위해 화면 다시 그리기
 				this.plugin.customizeEmptyState();
+					this.plugin.refreshOpenSynapticViews();
 			});
 		
 		// filePath는 비워둠 (런타임에 계산됨)
@@ -539,7 +547,9 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 				} else if (file.type === 'web') {
 				// Web 타입일 때는 일반 input 이벤트로 처리
 				textInput.addEventListener('blur', async () => {
-					file.filePath = textInput.value;
+					const newValue = textInput.value;
+					if (newValue === file.filePath) return; // 값이 변경되지 않았으면 무시
+					file.filePath = newValue;
 					// URL 변경 시 enabled를 false로 설정 (새로운 URL이 유효하지 않을 수 있음)
 					file.enabled = false;
 					await this.plugin.saveSettings();
@@ -588,6 +598,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 							this.display(); // Refresh the entire settings UI
 						}
 						this.plugin.customizeEmptyState();
+					this.plugin.refreshOpenSynapticViews();
 					});
 			});
 
@@ -607,6 +618,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 				await this.plugin.saveSettings();
 				this.display(); // Refresh the entire settings UI
 				this.plugin.customizeEmptyState();
+					this.plugin.refreshOpenSynapticViews();
 			}));
 	}
 
@@ -623,6 +635,7 @@ export class SynapticViewSettingTab extends PluginSettingTab {
 		await this.plugin.saveSettings();
 		this.display(); // Refresh the entire settings UI
 		this.plugin.customizeEmptyState();
+					this.plugin.refreshOpenSynapticViews();
 	}
 
 
