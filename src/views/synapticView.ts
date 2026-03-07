@@ -1,5 +1,5 @@
-import { App, TFile, WorkspaceLeaf, setIcon, Notice } from 'obsidian';
-import { SynapticViewSettings, SynapticContainer, QuickAccessFile, JournalGranularity } from '../settings';
+import { App, TFile, WorkspaceLeaf, MarkdownView, setIcon, Notice } from 'obsidian';
+import { SynapticViewSettings, SynapticContainer, SynapticLeaf, QuickAccessFile, JournalGranularity } from '../settings';
 import { FloatingButtonManager } from '../ui/floatingButton';
 import { DailyNoteBadgeManager } from '../ui/dailyNoteBadge';
 import { getJournalNotePath, createJournalNote } from '../utils/pluginChecker';
@@ -18,6 +18,7 @@ export class SynapticView {
 	private floatingButtonManager: FloatingButtonManager | null = null;
 	private currentFilePath: string | null = null;
 	private dailyNoteBadgeManager: DailyNoteBadgeManager;
+	private pendingFloatingButtonRefresh = false;
 
 	constructor(app: App, settings: SynapticViewSettings, dailyNoteBadgeManager: DailyNoteBadgeManager) {
 		this.app = app;
@@ -36,29 +37,18 @@ export class SynapticView {
 		const container = leaf.view.containerEl;
 		if (!container) return;
 		
-		// No enabled files - show setup message
+		// No enabled files - show the setup screen on true initial open.
 		if (enabledFiles.length === 0) {
-			const emptyState = container.querySelector('.empty-state');
-			if (emptyState) {
-				emptyState.empty();
-				(emptyState as HTMLElement).addClass('synaptic-empty-state');
-				this.showSetupMessage(emptyState as HTMLElement);
-				return;
-			}
+			await this.renderSetupState(leaf);
+			return;
 		}
 		
 		// Determine file to load
 		let quickAccessFileToLoad = initialFile;
 		
-		// If no initialFile provided, use default or first non-calendar/non-all file
+		// If no initialFile provided, respect the configured default item first.
 		if (!quickAccessFileToLoad) {
-			quickAccessFileToLoad = enabledFiles.find(file => {
-				// Calendar type: auto-load excluded (user must select from calendar)
-				if (file.type === 'calendar') return false;
-				// 'all' granularity: auto-load excluded (submenu only)
-				if (file.type === 'journal' && file.granularity === 'all') return false;
-				return true;
-			});
+			quickAccessFileToLoad = this.getInitialQuickAccessFile(enabledFiles);
 		}
 		
 		// No loadable items - show buttons only
@@ -71,16 +61,51 @@ export class SynapticView {
 		await this.loadFile(leaf, quickAccessFileToLoad, true);
 	}
 
+	private getInitialQuickAccessFile(enabledFiles: QuickAccessFile[]): QuickAccessFile | null {
+		const defaultIndex = this.settings.defaultViewIndex - 1;
+		const defaultFile = enabledFiles[defaultIndex];
+		if (defaultFile && this.isLoadableInitialFile(defaultFile)) {
+			return defaultFile;
+		}
+
+		return enabledFiles.find(file => this.isLoadableInitialFile(file)) || null;
+	}
+
+	private isLoadableInitialFile(file: QuickAccessFile): boolean {
+		if (file.type === 'calendar') {
+			return false;
+		}
+
+		if (file.type === 'journal' && file.granularity === 'all') {
+			return false;
+		}
+
+		return true;
+	}
+
 	/**
 	 * 플로팅 버튼만 추가 (파일 로드 없이)
 	 */
-	private async addFloatingButtonsOnly(leaf: WorkspaceLeaf) {
+	private async addFloatingButtonsOnly(
+		leaf: WorkspaceLeaf,
+		options: {
+			preservedFilePath?: string | null;
+			preservedActiveButtonId?: string | null;
+		} = {}
+	) {
 		const container = leaf.view.containerEl;
 		if (!container) return;
 		
 		// 기존 상태 보존
-		const preservedFilePath = this.currentFilePath || null;
-		const preservedActiveButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
+		const preservedFilePath = options.preservedFilePath !== undefined
+			? options.preservedFilePath
+			: (this.currentFilePath || null);
+		const preservedActiveButtonId = options.preservedActiveButtonId !== undefined
+			? options.preservedActiveButtonId
+			: (this.floatingButtonManager?.currentActiveButtonId || null);
+
+		this.currentFilePath = preservedFilePath;
+		this.applySynapticViewClasses(container);
 		
 		// containerEl 전체에서 기존 버튼 제거 (view-content 내부 포함)
 		const existingButtons = container.querySelectorAll('.synaptic-action-buttons');
@@ -88,7 +113,8 @@ export class SynapticView {
 		
 		// view-content 내부에 버튼 추가 (일관성 유지)
 		const viewContent = container.querySelector('.view-content');
-		const targetContainer = viewContent || container;
+		const emptyState = container.querySelector('.empty-state');
+		const targetContainer = viewContent || emptyState || container;
 
 		// 이전 FloatingButtonManager 정리
 		if (this.floatingButtonManager) {
@@ -106,6 +132,24 @@ export class SynapticView {
 		);
 		this.floatingButtonManager.load();
 		await this.floatingButtonManager.addFloatingButton(targetContainer as HTMLElement);
+		this.pendingFloatingButtonRefresh = false;
+	}
+
+	/**
+	 * Empty leaf의 기본 blank 화면은 유지하고 floating button만 덧붙입니다.
+	 */
+	async renderBlankState(leaf: WorkspaceLeaf) {
+		const container = leaf.view.containerEl;
+		if (!container) return;
+
+		container.querySelector('.synaptic-setup-message')?.remove();
+		const emptyState = container.querySelector('.empty-state') as HTMLElement | null;
+		emptyState?.removeClass('synaptic-empty-state');
+
+		await this.addFloatingButtonsOnly(leaf, {
+			preservedFilePath: null,
+			preservedActiveButtonId: null
+		});
 	}
 
 	/**
@@ -145,24 +189,14 @@ export class SynapticView {
 			// File/Journal Note 타입: Obsidian 파일 열기
 			let file = this.app.vault.getAbstractFileByPath(filePath);
 
-			console.log('[Synaptic View] Loading file/journal:', {
-				type: quickAccessFile.type,
-				filePath,
-				fileExists: !!file,
-				granularity: quickAccessFile.type === 'journal' ? granularity : 'N/A'
-			});
-
 			// Journal Note 타입이고 파일이 없으면 granularity에 맞게 생성
 			if (!file && quickAccessFile.type === 'journal') {
-				console.log('[Synaptic View] Creating journal note:', granularity);
 				file = await createJournalNote(granularity);
 				if (!file) {
-					console.log('[Synaptic View] Failed to create journal note');
 					return;
 			}
 				// 생성된 파일의 실제 경로로 업데이트
 				filePath = file.path;
-				console.log('[Synaptic View] Journal note created:', filePath);
 			}
 
 			// File 타입인데 파일이 존재하지 않으면 사용자에게 알림하고 빈 상태로 UI만 표시
@@ -170,7 +204,6 @@ export class SynapticView {
 				const fileName = filePath.split('/').pop() || filePath;
 				const translations = t();
 				new Notice(`📄 "${fileName}" ${translations.settings.notices.fileNotFound}\n${translations.settings.notices.checkSettings}`);
-				console.warn('[Synaptic View] File not found:', filePath);
 				
 				// 파일이 없어도 플로팅 버튼은 표시 (다른 파일로 전환 가능하도록)
 				this.setLeafTitle(leaf, iconName);
@@ -192,7 +225,6 @@ export class SynapticView {
 
 				// DOM이 업데이트될 때까지 기다린 후 뷰 타이틀 변경 & 버튼 추가
 				setTimeout(() => {
-					console.log('[Synaptic View] Setting title and UI after file open, icon:', iconName);
 					this.setLeafTitle(leaf, iconName);
 
 					// 활성 버튼 ID 설정: 초기 로드 시 또는 현재 활성 버튼 ID 유지
@@ -244,12 +276,6 @@ export class SynapticView {
 		// leaf의 tabHeaderEl을 직접 사용 (활성화 여부와 관계없이)
 		const tabHeaderEl = (leaf as WorkspaceLeaf & { tabHeaderEl?: HTMLElement }).tabHeaderEl;
 		
-		console.log('[Synaptic View] setLeafTitle called:', {
-			hasTabHeaderEl: !!tabHeaderEl,
-			iconName,
-			leafId: (leaf as WorkspaceLeaf & { id?: string }).id
-		});
-		
 		if (tabHeaderEl) {
 			// Synaptic View 탭임을 표시하는 클래스 추가
 			tabHeaderEl.addClass('synaptic-view-tab');
@@ -259,12 +285,6 @@ export class SynapticView {
 			
 			const titleEl = tabHeaderEl.querySelector('.workspace-tab-header-inner-title');
 			const iconEl = tabHeaderEl.querySelector('.workspace-tab-header-inner-icon');
-			
-			console.log('[Synaptic View] Tab elements found:', {
-				hasTitleEl: !!titleEl,
-				hasIconEl: !!iconEl,
-				currentIconData: tabHeaderEl.getAttribute('data-synaptic-icon')
-			});
 			
 			if (titleEl) {
 				titleEl.setText('Synaptic View');
@@ -288,6 +308,54 @@ export class SynapticView {
 		
 		// 새 아이콘 설정
 		setIcon(htmlIconEl, iconName);
+	}
+
+	private resolveQuickAccessPath(file: QuickAccessFile): string | null {
+		if (file.type === 'journal') {
+			const granularity = file.granularity || 'day';
+			if (granularity === 'all') {
+				return null;
+			}
+
+			return getJournalNotePath(granularity);
+		}
+
+		if (file.type === 'calendar') {
+			return null;
+		}
+
+		return file.filePath || null;
+	}
+
+	private getPreservedActiveButtonId(): string | null {
+		const activeButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
+		if (!activeButtonId) {
+			return null;
+		}
+
+		const activeFile = this.settings.quickAccessFiles.find(file => file.enabled && file.id === activeButtonId);
+		if (!activeFile) {
+			return null;
+		}
+
+		if (activeFile.type === 'calendar') {
+			return activeFile.id;
+		}
+
+		if (activeFile.type === 'journal' && activeFile.granularity === 'all') {
+			return activeFile.id;
+		}
+
+		const runtimePath = this.resolveQuickAccessPath(activeFile);
+		return runtimePath && runtimePath === this.currentFilePath ? activeFile.id : null;
+	}
+
+	private isSetupState(container: HTMLElement): boolean {
+		return container.querySelector('.synaptic-setup-message') !== null;
+	}
+
+	private hasRenderableViewContent(container: HTMLElement): boolean {
+		return container.querySelector('.view-content') !== null;
 	}
 
 	/**
@@ -320,44 +388,83 @@ export class SynapticView {
 	 * @param filePath - 현재 열린 파일 경로
 	 * @param activeButtonId - 활성화할 버튼 ID (초기 로드 시)
 	 */
-	private async addContainerUI(leaf: WorkspaceLeaf, filePath: string, activeButtonId: string | null = null) {
+	private async addContainerUI(leaf: WorkspaceLeaf, filePath: string, activeButtonId: string | null = null): Promise<boolean> {
 		const container = leaf.view.containerEl;
-		if (container) {
-			this.applySynapticViewClasses(container);
-			
-			// containerEl 전체에서 기존 버튼 제거 (중복 방지)
-			const existingButtons = container.querySelectorAll('.synaptic-action-buttons');
-			existingButtons.forEach(btn => btn.remove());
-			
-			// .view-content 내부에 버튼 추가
-			const viewContent = container.querySelector('.view-content');
-			if (viewContent) {
-				// 이전 FloatingButtonManager의 currentActiveButtonId 보존 (Journal all, Calendar 등에서 설정한 활성 상태 유지)
-				const previousActiveButtonId = activeButtonId !== null
-					? activeButtonId
-					: (this.floatingButtonManager?.currentActiveButtonId || null);
-
-				// filePath가 빈 문자열이면 현재 filePath 유지
-				const actualFilePath = filePath || this.currentFilePath || null;
-
-				// 이전 FloatingButtonManager 정리
-				if (this.floatingButtonManager) {
-					this.floatingButtonManager.unload();
-				}
-
-				this.floatingButtonManager = new FloatingButtonManager(
-					this.app,
-					this.settings,
-					(qaf) => this.loadFile(leaf, qaf, false),
-					this.dailyNoteBadgeManager,
-					actualFilePath,
-					previousActiveButtonId,
-					() => this.dismissView(leaf)
-				);
-				this.floatingButtonManager.load();
-				await this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
-			}
+		if (!container) {
+			return false;
 		}
+
+		this.applySynapticViewClasses(container);
+
+		const viewContent = container.querySelector('.view-content');
+		if (!viewContent) {
+			this.pendingFloatingButtonRefresh = true;
+			return false;
+		}
+
+		// containerEl 전체에서 기존 버튼 제거 (중복 방지)
+		const existingButtons = container.querySelectorAll('.synaptic-action-buttons');
+		existingButtons.forEach(btn => btn.remove());
+
+		// 이전 FloatingButtonManager의 currentActiveButtonId 보존 (Journal all, Calendar 등에서 설정한 활성 상태 유지)
+		const previousActiveButtonId = activeButtonId !== null
+			? activeButtonId
+			: (this.floatingButtonManager?.currentActiveButtonId || null);
+
+		// filePath가 빈 문자열이면 현재 filePath 유지
+		const actualFilePath = filePath || this.currentFilePath || null;
+
+		// 이전 FloatingButtonManager 정리
+		if (this.floatingButtonManager) {
+			this.floatingButtonManager.unload();
+		}
+
+		this.floatingButtonManager = new FloatingButtonManager(
+			this.app,
+			this.settings,
+			(qaf) => this.loadFile(leaf, qaf, false),
+			this.dailyNoteBadgeManager,
+			actualFilePath,
+			previousActiveButtonId,
+			() => this.dismissView(leaf)
+		);
+		this.floatingButtonManager.load();
+		await this.floatingButtonManager.addFloatingButton(viewContent as HTMLElement);
+		this.pendingFloatingButtonRefresh = false;
+		return true;
+	}
+
+	async renderSetupState(leaf: WorkspaceLeaf) {
+		const container = leaf.view.containerEl;
+		if (!container) return;
+
+		this.currentFilePath = null;
+		this.pendingFloatingButtonRefresh = false;
+
+		const existingButtons = container.querySelectorAll('.synaptic-action-buttons');
+		existingButtons.forEach(btn => btn.remove());
+
+		container.removeAttribute('data-synaptic-managed');
+		container.removeClass('synaptic-viewer-container');
+		container.removeClass('hide-inline-title');
+		container.removeClass('hide-embedded-mentions');
+
+		if (this.floatingButtonManager) {
+			this.floatingButtonManager.unload();
+			this.floatingButtonManager = null;
+		}
+
+		const emptyState = container.querySelector('.empty-state') as HTMLElement | null;
+		if (emptyState) {
+			emptyState.empty();
+			emptyState.addClass('synaptic-empty-state');
+			this.showSetupMessage(emptyState);
+		}
+
+		await this.addFloatingButtonsOnly(leaf, {
+			preservedFilePath: null,
+			preservedActiveButtonId: null
+		});
 	}
 
 	/**
@@ -374,12 +481,29 @@ export class SynapticView {
 		return this.currentFilePath;
 	}
 
+	syncCurrentLeafState(leaf: WorkspaceLeaf): void {
+		if (leaf.view instanceof MarkdownView) {
+			this.currentFilePath = leaf.view.file?.path || null;
+			return;
+		}
+
+		const viewState = leaf.getViewState();
+		if (viewState.type === 'webviewer') {
+			const webState = viewState.state as { url?: unknown } | undefined;
+			this.currentFilePath = typeof webState?.url === 'string' ? webState.url : null;
+			return;
+		}
+
+		this.currentFilePath = null;
+	}
+
 	/**
 	 * Synaptic View를 해제하고 일반 탭으로 복원합니다.
 	 */
 	private dismissView(leaf: WorkspaceLeaf) {
 		const container = leaf.view.containerEl;
 		if (!container) return;
+		this.pendingFloatingButtonRefresh = false;
 
 		// Synaptic View 클래스/속성 제거
 		container.removeAttribute('data-synaptic-managed');
@@ -388,13 +512,11 @@ export class SynapticView {
 		container.removeClass('hide-embedded-mentions');
 
 		// 플로팅 버튼 제거
-		const viewContent = container.querySelector('.view-content');
-		if (viewContent) {
-			const floatingButtons = viewContent.querySelector('.synaptic-action-buttons');
-			if (floatingButtons) {
-				floatingButtons.remove();
-			}
-		}
+		const floatingButtons = container.querySelectorAll('.synaptic-action-buttons');
+		floatingButtons.forEach(button => button.remove());
+		container.querySelector('.synaptic-setup-message')?.remove();
+		const emptyState = container.querySelector('.empty-state') as HTMLElement | null;
+		emptyState?.removeClass('synaptic-empty-state');
 
 		// 탭 헤더 복원
 		const tabHeaderEl = (leaf as WorkspaceLeaf & { tabHeaderEl?: HTMLElement }).tabHeaderEl;
@@ -403,8 +525,8 @@ export class SynapticView {
 			tabHeaderEl.removeAttribute('data-synaptic-icon');
 		}
 
-		// 컨테이너에 저장된 참조 정리
-		delete (container as SynapticContainer)._synapticView;
+		// 저장된 참조 정리
+		delete (leaf as unknown as SynapticLeaf)._synapticView;
 		delete (container as SynapticContainer)._synapticDestroy;
 
 		// FloatingButtonManager 정리
@@ -420,37 +542,59 @@ export class SynapticView {
 		if (!container) return;
 
 		const enabledFiles = this.settings.quickAccessFiles.filter(f => f.enabled);
+		const preservedActiveButtonId = this.getPreservedActiveButtonId();
+		const hasViewContent = container.querySelector('.view-content') !== null;
 
-		// Quick Access가 모두 비었으면 empty 상태로 전환
-		if (enabledFiles.length === 0) {
-			this.destroy();
-			// 기존 버튼 제거
-			const existingButtons = container.querySelectorAll('.synaptic-action-buttons');
-			existingButtons.forEach(btn => btn.remove());
-			// empty view로 전환
-			await leaf.setViewState({ type: 'empty', active: true });
-			const emptyState = container.querySelector('.empty-state');
-			if (emptyState) {
-				emptyState.empty();
-				(emptyState as HTMLElement).addClass('synaptic-empty-state');
-				this.showSetupMessage(emptyState as HTMLElement);
+		if (this.isSetupState(container)) {
+			if (enabledFiles.length === 0) {
+				await this.renderSetupState(leaf);
+				return;
 			}
+
+			await this.addFloatingButtonsOnly(leaf, {
+				preservedFilePath: null,
+				preservedActiveButtonId: null
+			});
 			return;
 		}
 
-		// 현재 활성 버튼의 Quick Access 항목이 아직 존재하는지 확인
-		const activeButtonId = this.floatingButtonManager?.currentActiveButtonId || null;
-		const stillExists = activeButtonId
-			? enabledFiles.some(f => f.id === activeButtonId)
-			: false;
+		if (enabledFiles.length === 0) {
+			if (this.currentFilePath && !this.hasRenderableViewContent(container)) {
+				this.applySynapticViewClasses(container);
+				this.pendingFloatingButtonRefresh = true;
+				return;
+			}
 
-		if (stillExists) {
-			// 현재 상태 유지하면서 버튼 바만 재생성
-			this.addContainerUI(leaf, this.currentFilePath || '', activeButtonId);
-		} else {
-			// 삭제된 항목이었으면 전체 재초기화 (default로 전환)
-			await this.initializeSynapticView(leaf);
+			await this.addFloatingButtonsOnly(leaf, {
+				preservedFilePath: this.currentFilePath,
+				preservedActiveButtonId: null
+			});
+			return;
 		}
+
+		if (hasViewContent) {
+			await this.addContainerUI(leaf, this.currentFilePath || '', preservedActiveButtonId);
+			return;
+		}
+
+		if (this.currentFilePath) {
+			this.applySynapticViewClasses(container);
+			this.pendingFloatingButtonRefresh = true;
+			return;
+		}
+
+		await this.addFloatingButtonsOnly(leaf, {
+			preservedFilePath: this.currentFilePath,
+			preservedActiveButtonId: preservedActiveButtonId
+		});
+	}
+
+	hasPendingFloatingButtonRefresh(): boolean {
+		return this.pendingFloatingButtonRefresh;
+	}
+
+	markFloatingButtonRefreshPending(): void {
+		this.pendingFloatingButtonRefresh = true;
 	}
 
 	/**
@@ -486,10 +630,10 @@ export class SynapticView {
 	 * 리소스 정리 (플러그인 unload 시 호출)
 	 */
 	destroy() {
+		this.pendingFloatingButtonRefresh = false;
 		if (this.floatingButtonManager) {
 			this.floatingButtonManager.unload();
 			this.floatingButtonManager = null;
 		}
 	}
 }
-

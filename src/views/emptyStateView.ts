@@ -1,5 +1,5 @@
 import { App, Component, TFile, WorkspaceLeaf, MarkdownView } from 'obsidian';
-import { SynapticViewSettings, SynapticContainer } from '../settings';
+import { SynapticViewSettings, SynapticContainer, SynapticLeaf } from '../settings';
 import { SynapticView } from './synapticView';
 import { DailyNoteBadgeManager } from '../ui/dailyNoteBadge';
 import { openPluginSettings } from '../utils/openSettings';
@@ -13,7 +13,6 @@ import { t } from '../utils/i18n';
 export class EmptyStateViewManager extends Component {
 	private app: App;
 	private settings: SynapticViewSettings;
-	private lastActiveLeaf: WorkspaceLeaf | null = null;
 	private dailyNoteBadgeManager: DailyNoteBadgeManager;
 
 	constructor(app: App, settings: SynapticViewSettings, dailyNoteBadgeManager: DailyNoteBadgeManager) {
@@ -46,33 +45,24 @@ export class EmptyStateViewManager extends Component {
 			const container = leaf.view.containerEl;
 			if (!container) continue;
 			if (this.isHoverPreviewLeaf(container)) continue;
-			
-			// 활성화된 파일이 있는지 확인
-			const enabledFiles = this.settings.quickAccessFiles.filter(f => f.enabled);
-			
-			// 등록된 파일이 없을 때 안내 메시지 표시
-			if (enabledFiles.length === 0) {
-				const emptyState = container.querySelector('.empty-state');
-				if (!emptyState) continue;
 
-				emptyState.empty();
-				emptyState.addClass('synaptic-empty-state');
-				this.showSetupMessage(emptyState as HTMLElement);
+			const synapticLeaf = leaf as unknown as SynapticLeaf;
+			if (synapticLeaf._synapticView) {
 				continue;
 			}
 			
-			// defaultViewIndex에 해당하는 파일 선택 (1-based index)
-			const defaultIndex = Math.max(1, Math.min(this.settings.defaultViewIndex, enabledFiles.length));
-			const defaultFile = enabledFiles[defaultIndex - 1];
-			
-			// Synaptic View 초기화 (defaultFile을 초기 파일로 전달)
-			const synapticView = new SynapticView(this.app, this.settings, this.dailyNoteBadgeManager);
-			this.register(() => synapticView.destroy());
-			// 컨테이너에 SynapticView 인스턴스 및 cleanup 함수 저장
-			(container as SynapticContainer)._synapticView = synapticView;
-			(container as SynapticContainer)._synapticDestroy = () => synapticView.destroy();
-			await synapticView.initializeSynapticView(leaf, defaultFile);
+			// True initial open: default item auto-open / setup screen rendering 유지
+			const synapticView = this.createSynapticView(leaf, container);
+			await synapticView.initializeSynapticView(leaf);
 		}
+	}
+
+	private createSynapticView(leaf: WorkspaceLeaf, container: HTMLElement): SynapticView {
+		const synapticView = new SynapticView(this.app, this.settings, this.dailyNoteBadgeManager);
+		this.register(() => synapticView.destroy());
+		(leaf as unknown as SynapticLeaf)._synapticView = synapticView;
+		(container as SynapticContainer)._synapticDestroy = () => synapticView.destroy();
+		return synapticView;
 	}
 
 	private isHoverPreviewLeaf(container: HTMLElement): boolean {
@@ -90,15 +80,6 @@ export class EmptyStateViewManager extends Component {
 		const activeLeaf = this.app.workspace.activeLeaf;
 		if (!activeLeaf) return;
 		
-		// 탭 전환 감지: 이전 active leaf와 현재 active leaf가 다르면 탭 전환
-		const isTabSwitch = this.lastActiveLeaf !== null && this.lastActiveLeaf !== activeLeaf;
-		this.lastActiveLeaf = activeLeaf;
-		
-		// 탭 전환인 경우 Synaptic View 속성 유지
-		if (isTabSwitch) {
-			return;
-		}
-		
 		const container = activeLeaf.view.containerEl;
 		if (!container) return;
 		
@@ -107,6 +88,14 @@ export class EmptyStateViewManager extends Component {
 		
 		// QuickAccess를 통한 탐색인지 확인 (DOM 속성으로 체크)
 		if (container.getAttribute('data-synaptic-quick-access') === 'true') {
+			return;
+		}
+
+		const synapticView = (activeLeaf as unknown as SynapticLeaf)._synapticView;
+		const currentSynapticPath = synapticView?.getCurrentFilePath();
+
+		// 같은 파일을 다시 활성화한 경우는 탭 전환으로 간주하고 유지
+		if (currentSynapticPath && currentSynapticPath === file.path) {
 			return;
 		}
 		
@@ -121,15 +110,13 @@ export class EmptyStateViewManager extends Component {
 		// 스타일 클래스 제거
 		container.removeClass('hide-inline-title');
 		container.removeClass('hide-embedded-mentions');
-		
+		container.querySelector('.synaptic-setup-message')?.remove();
+		const emptyState = container.querySelector('.empty-state') as HTMLElement | null;
+		emptyState?.removeClass('synaptic-empty-state');
+
 		// 플로팅 버튼 제거
-		const viewContent = container.querySelector('.view-content');
-		if (viewContent) {
-			const floatingButtons = viewContent.querySelector('.synaptic-action-buttons');
-			if (floatingButtons) {
-				floatingButtons.remove();
-			}
-		}
+		const floatingButtons = container.querySelectorAll('.synaptic-action-buttons');
+		floatingButtons.forEach(button => button.remove());
 
 		// SynapticView 리소스 정리 (document-level 리스너 해제)
 		const destroyFn = (container as SynapticContainer)._synapticDestroy;
@@ -137,6 +124,8 @@ export class EmptyStateViewManager extends Component {
 			destroyFn();
 			delete (container as SynapticContainer)._synapticDestroy;
 		}
+
+		delete (activeLeaf as unknown as SynapticLeaf)._synapticView;
 	}
 
 	private showSetupMessage(container: HTMLElement) {
@@ -205,21 +194,12 @@ export class EmptyStateViewManager extends Component {
 					
 					// synaptic-viewer-container 클래스 제거
 					container.removeClass('synaptic-viewer-container');
+					container.querySelector('.synaptic-setup-message')?.remove();
+					const emptyState = container.querySelector('.empty-state') as HTMLElement | null;
+					emptyState?.removeClass('synaptic-empty-state');
 					
-					// 플로팅 버튼 제거 (.view-content 내부 확인)
-					const viewContent = container.querySelector('.view-content');
-					if (viewContent) {
-						const floatingButtons = viewContent.querySelector('.synaptic-action-buttons');
-						if (floatingButtons) {
-							floatingButtons.remove();
-						}
-					}
-					
-					// 혹시 컨테이너 직속에도 있을 수 있으니 확인
-					const directButtons = container.querySelector('.synaptic-action-buttons');
-					if (directButtons) {
-						directButtons.remove();
-					}
+					const floatingButtons = container.querySelectorAll('.synaptic-action-buttons');
+					floatingButtons.forEach(button => button.remove());
 				}
 			}
 		});
@@ -227,9 +207,7 @@ export class EmptyStateViewManager extends Component {
 		// 탭 헤더의 synaptic-view-tab 클래스도 정리
 		const synapticTabHeaders = document.querySelectorAll('.workspace-tab-header.synaptic-view-tab');
 		
-		console.log('[Synaptic View] cleanupNonSynapticTabs - checking tab headers:', synapticTabHeaders.length);
-		
-		synapticTabHeaders.forEach((tabHeader, index) => {
+		synapticTabHeaders.forEach((tabHeader) => {
 			const tabEl = tabHeader as HTMLElement;
 			
 			// data-synaptic-icon attribute가 있으면 Synaptic View 탭으로 유지
@@ -240,19 +218,8 @@ export class EmptyStateViewManager extends Component {
 			const title = titleEl?.textContent || '';
 			const isSynapticViewTitle = title === 'Synaptic View';
 			
-			const ariaLabel = tabEl.getAttribute('aria-label') || '';
-			
-			console.log(`[Synaptic View] Tab ${index} cleanup check:`, {
-				ariaLabel,
-				title,
-				hasSynapticIcon,
-				isSynapticViewTitle,
-				willKeep: !!(hasSynapticIcon || isSynapticViewTitle)
-			});
-			
 			// data-synaptic-icon이 있거나 타이틀이 "Synaptic View"면 유지
 			if (!hasSynapticIcon && !isSynapticViewTitle) {
-				console.log(`[Synaptic View] Removing synaptic-view-tab from tab ${index}`);
 				tabHeader.removeClass('synaptic-view-tab');
 			}
 		});

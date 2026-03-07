@@ -488,14 +488,12 @@ export class FloatingButtonManager extends Component {
 	private openTodayDailyNote() {
 		// Daily Notes가 활성화되어 있지 않으면 아무것도 하지 않음
 		if (!isJournalAvailable()) {
-			console.log('[Synaptic View] Daily Notes is not enabled');
 			return;
 		}
 
 		// Calendar 버튼 찾기
 		const calendarFile = this.settings.quickAccessFiles.find(f => f.type === 'calendar' && f.enabled);
 		if (!calendarFile) {
-			console.log('[Synaptic View] Calendar button not found');
 			return;
 		}
 

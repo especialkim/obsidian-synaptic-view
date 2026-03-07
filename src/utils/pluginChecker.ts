@@ -140,8 +140,7 @@ export function getDailyNoteFormat(): { format: string; folder: string } {
 			format: settings.format || 'YYYY-MM-DD',
 			folder: settings.folder || ''
 		};
-	} catch (error) {
-		console.error('[Synaptic View] Daily Note 설정 가져오기 실패:', error);
+	} catch {
 		return {
 			format: 'YYYY-MM-DD',
 			folder: ''
@@ -166,8 +165,7 @@ export function getTodayDailyNotePath(): string {
 			: `${today}.md`;
 
 		return filePath;
-	} catch (error) {
-		console.error('[Synaptic View] Daily Note 경로 생성 실패:', error);
+	} catch {
 		return 'YYYY-MM-DD.md';
 	}
 }
@@ -214,8 +212,7 @@ export function getJournalNotePath(granularity: JournalGranularity): string {
 		// normalizePath로 경로 정규화
 		return folder ? normalizePath(`${folder}/${filename}.md`) : `${filename}.md`;
 		
-	} catch (error) {
-		console.error('[Synaptic View] Journal Note 경로 생성 실패:', error);
+	} catch {
 		return 'YYYY-MM-DD.md';
 	}
 }
@@ -324,10 +321,8 @@ export async function getDailyNoteTaskCount(app: App): Promise<{ incomplete: num
 			completed: completedTasks
 		};
 		
-	} catch (error) {
-		console.error('[Synaptic View] Daily Note task 카운팅 실패:', error);
-		return null;
-	}
+		} catch {
+			return null;
+		}
 }
-
 

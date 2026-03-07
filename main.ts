@@ -1,7 +1,8 @@
-import { Plugin, setIcon, addIcon } from 'obsidian';
-import { SynapticViewSettings, SynapticContainer, DEFAULT_SETTINGS } from './src/settings';
+import { Plugin, WorkspaceLeaf, setIcon, addIcon } from 'obsidian';
+import { SynapticViewSettings, SynapticContainer, SynapticLeaf, DEFAULT_SETTINGS } from './src/settings';
 import { SynapticViewSettingTab } from './src/settingsTab';
 import { EmptyStateViewManager } from './src/views/emptyStateView';
+import { SynapticView } from './src/views/synapticView';
 import { DailyNoteBadgeManager } from './src/ui/dailyNoteBadge';
 import { registerCommands } from './src/commands';
 import {
@@ -17,6 +18,37 @@ export default class SynapticViewPlugin extends Plugin {
 	settings: SynapticViewSettings;
 	private emptyStateManager: EmptyStateViewManager;
 	public dailyNoteBadgeManager: DailyNoteBadgeManager;
+	private refreshOpenViewsTimeout: number | null = null;
+
+	private isLeafVisiblyRendered(leaf: { view: { containerEl: HTMLElement } }): boolean {
+		const container = leaf.view.containerEl;
+		return container.isConnected && (container.offsetParent !== null || container.getClientRects().length > 0);
+	}
+
+	private ensureSynapticLeaf(leaf: WorkspaceLeaf): SynapticLeaf | null {
+		const synapticLeaf = leaf as unknown as SynapticLeaf;
+		if (synapticLeaf._synapticView) {
+			return synapticLeaf;
+		}
+
+		const tabHeaderEl = (leaf as WorkspaceLeaf & { tabHeaderEl?: HTMLElement }).tabHeaderEl;
+		const hasSynapticTabMarker = !!tabHeaderEl?.hasClass('synaptic-view-tab') || !!tabHeaderEl?.getAttribute('data-synaptic-icon');
+		if (!hasSynapticTabMarker) {
+			return null;
+		}
+
+		const container = leaf.view.containerEl;
+		if (!container) {
+			return null;
+		}
+
+		const synapticView = new SynapticView(this.app, this.settings, this.dailyNoteBadgeManager);
+		this.register(() => synapticView.destroy());
+		synapticView.syncCurrentLeafState(leaf);
+		synapticLeaf._synapticView = synapticView;
+		(container as SynapticContainer)._synapticDestroy = () => synapticView.destroy();
+		return synapticLeaf;
+	}
 
 	async onload() {
 		// Register custom calendar icons
@@ -56,8 +88,16 @@ export default class SynapticViewPlugin extends Plugin {
 
 		// Restore tab icons on active-leaf-change (탭 전환 시)
 		this.registerEvent(
-			this.app.workspace.on('active-leaf-change', () => {
+			this.app.workspace.on('active-leaf-change', (leaf) => {
 				this.restoreSynapticViewTabIcons();
+				if (!leaf) {
+					return;
+				}
+
+				const synapticLeaf = this.ensureSynapticLeaf(leaf);
+				if (synapticLeaf?._synapticView) {
+					void synapticLeaf._synapticView.refreshFloatingButtons(leaf);
+				}
 			})
 		);
 
@@ -81,15 +121,26 @@ export default class SynapticViewPlugin extends Plugin {
 	}
 
 	/**
-	 * 열려있는 모든 Synaptic View 탭의 플로팅 버튼을 갱신합니다.
+	 * 열려있는 Synaptic View 탭의 UI만 비내비게이션 방식으로 갱신합니다.
 	 */
-	async refreshOpenSynapticViews() {
-		this.app.workspace.iterateAllLeaves(leaf => {
-			const container = leaf.view.containerEl as SynapticContainer;
-			if (container?.getAttribute('data-synaptic-managed') === 'true' && container._synapticView) {
-				container._synapticView.refreshFloatingButtons(leaf);
-			}
-		});
+	refreshOpenSynapticViews() {
+		if (this.refreshOpenViewsTimeout !== null) {
+			window.clearTimeout(this.refreshOpenViewsTimeout);
+		}
+
+		this.refreshOpenViewsTimeout = window.setTimeout(() => {
+			this.refreshOpenViewsTimeout = null;
+			this.app.workspace.iterateAllLeaves(leaf => {
+				const synapticLeaf = this.ensureSynapticLeaf(leaf);
+				if (synapticLeaf?._synapticView) {
+					if (this.isLeafVisiblyRendered(leaf)) {
+						void synapticLeaf._synapticView.refreshFloatingButtons(leaf);
+					} else {
+						synapticLeaf._synapticView.markFloatingButtonRefreshPending();
+					}
+				}
+			});
+		}, 0);
 	}
 
 	/**
@@ -100,21 +151,9 @@ export default class SynapticViewPlugin extends Plugin {
 		// 모든 Synaptic View 탭 찾기
 		const synapticTabHeaders = document.querySelectorAll('.workspace-tab-header.synaptic-view-tab');
 		
-		console.log('[Synaptic View] restoreSynapticViewTabIcons called:', {
-			foundTabs: synapticTabHeaders.length
-		});
-		
-		synapticTabHeaders.forEach((tabHeader, index) => {
+		synapticTabHeaders.forEach((tabHeader) => {
 			const iconEl = tabHeader.querySelector('.workspace-tab-header-inner-icon');
 			const iconName = tabHeader.getAttribute('data-synaptic-icon');
-			const hasSvg = iconEl ? !!(iconEl.querySelector('svg')) : false;
-			
-			console.log(`[Synaptic View] Tab ${index}:`, {
-				hasIconEl: !!iconEl,
-				iconName,
-				hasSvg,
-				needsRestore: iconEl && iconName && !hasSvg
-			});
 			
 			// 아이콘 엘리먼트가 있고, 아이콘 이름이 저장되어 있으면 복원
 			if (iconEl && iconName) {
@@ -122,7 +161,6 @@ export default class SynapticViewPlugin extends Plugin {
 				
 				// 아이콘이 비어있거나 SVG가 없으면 복원
 				if (!htmlIconEl.querySelector('svg')) {
-					console.log(`[Synaptic View] Restoring icon for tab ${index}:`, iconName);
 					htmlIconEl.empty();
 					setIcon(htmlIconEl, iconName);
 				}

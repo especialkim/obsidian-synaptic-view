@@ -278,9 +278,8 @@ export class CalendarSubmenu {
 			} else {
 				new Notice('📅 Cannot open daily note.');
 			}
-		} catch (error) {
-			console.error('[Calendar] 데일리 노트 열기 실패:', error);
-				new Notice('📅 Error occurred while opening daily note.');
+		} catch {
+			new Notice('📅 Error occurred while opening daily note.');
 		}
 	}
 
@@ -309,9 +308,8 @@ export class CalendarSubmenu {
 			} else {
 				new Notice('📅 Cannot open weekly note.');
 			}
-		} catch (error) {
-			console.error('[Calendar] 주간 노트 열기 실패:', error);
-				new Notice('📅 Error occurred while opening weekly note.');
+		} catch {
+			new Notice('📅 Error occurred while opening weekly note.');
 		}
 	}
 
@@ -340,9 +338,8 @@ export class CalendarSubmenu {
 			} else {
 				new Notice('📅 Cannot open yearly note.');
 			}
-		} catch (error) {
-			console.error('[Calendar] 년간 노트 열기 실패:', error);
-				new Notice('📅 Error occurred while opening yearly note.');
+		} catch {
+			new Notice('📅 Error occurred while opening yearly note.');
 		}
 	}
 
@@ -371,9 +368,8 @@ export class CalendarSubmenu {
 			} else {
 				new Notice('📅 Cannot open monthly note.');
 			}
-		} catch (error) {
-			console.error('[Calendar] 월간 노트 열기 실패:', error);
-				new Notice('📅 Error occurred while opening monthly note.');
+		} catch {
+			new Notice('📅 Error occurred while opening monthly note.');
 		}
 	}
 
@@ -406,9 +402,8 @@ export class CalendarSubmenu {
 			} else {
 				new Notice('📅 Cannot open quarterly note.');
 			}
-		} catch (error) {
-			console.error('[Calendar] 분기 노트 열기 실패:', error);
-				new Notice('📅 Error occurred while opening quarterly note.');
+		} catch {
+			new Notice('📅 Error occurred while opening quarterly note.');
 		}
 	}
 

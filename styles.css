@@ -87,6 +87,10 @@
 /* 액션 버튼 스타일 - 상단 오른쪽 */
 /* .view-content 내부에 배치되는 플로팅 버튼 */
 /* 플러그인 컨테이너 내부에서만 position 적용 (코어 스타일 오버라이드 방지) */
+.synaptic-viewer-container {
+	position: relative;
+}
+
 .synaptic-viewer-container .view-content {
 	position: relative; /* 버튼의 absolute 위치 기준점 */
 }
@@ -897,4 +901,3 @@
 	opacity: 0.5;
 	cursor: not-allowed;
 }
-

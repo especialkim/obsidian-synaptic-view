@@ -1,5 +1,8 @@
 export interface SynapticContainer extends HTMLElement {
 	_synapticDestroy?: () => void;
+}
+
+export interface SynapticLeaf {
 	_synapticView?: import('./views/synapticView').SynapticView;
 }
 
