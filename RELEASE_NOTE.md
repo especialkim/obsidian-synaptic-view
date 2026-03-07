@@ -1,5 +1,17 @@
 # Release Notes
 
+## 0.1.5
+
+Community plugin review compliance — event lifecycle and deprecated API cleanup.
+
+### Fixes
+
+- **registerDomEvent**: Replaced remaining raw `addEventListener` calls with `registerDomEvent()` in `FloatingButtonManager` and `EmptyStateViewManager` (Component subclasses)
+- **Deprecated API**: Replaced `workspace.activeLeaf` with `getMostRecentLeaf()` in `emptyStateView.ts` and `createFileAction.ts`
+- **Timeout cleanup**: `refreshOpenViewsTimeout` is now properly cleared in `onunload()` to prevent stale callbacks after plugin disable
+
+---
+
 ## 0.1.4
 
 Empty state handling and live settings refresh.
